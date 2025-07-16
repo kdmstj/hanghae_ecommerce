@@ -17,7 +17,7 @@ erDiagram
     USER_POINT {
         BIGINT id PK
         BIGINT user_id FK
-        BIGINT balance
+        BIGINT balance "포인트 잔액"
         DATETIME updated_at
     }
     USER_POINT ||--o{ USER_POINT_HISTORY : has
@@ -33,11 +33,11 @@ erDiagram
         BIGINT id PK
         VARCHAR(255) name
         VARCHAR(10) discount_type "PERCENT, FIXED"
-        INT discount_value
-        INT total_quantity
-        INT issued_quantity
-        DATETIME started_at
-        DATETIME ended_at
+        INT discount_value 
+        INT total_quantity "초기 수량"
+        INT issued_quantity "발급된 수량"
+        DATETIME issued_started_at "쿠폰 발급 가능 시작"
+        DATETIME issued_ended_at  "쿠폰 발급 가능 종료"
         DATETIME created_at
         DATETIME updated_at
     }
@@ -46,10 +46,9 @@ erDiagram
         BIGINT id PK
         BIGINT user_id FK
         BIGINT coupon_id FK
-        DATETIME issued_at
-        DATETIME started_at
-        DATETIME ended_at
-        BOOLEAN is_used
+        DATETIME issued_at "발급 날짜"
+        DATETIME expired_at "만료 날짜"
+        DATETIME used_at "사용 날짜"
     }
     ORDER {
         BIGINT id PK
@@ -78,6 +77,7 @@ erDiagram
         INT discount_amount
         DATETIME created_at
     }
+    ORDER ||--o{ ORDER_PAYMENT : records
     ORDER_PRODUCT {
         BIGINT id PK
         BIGINT order_id
@@ -99,9 +99,8 @@ erDiagram
 
     BEST_SELLER{
         BIGINT product_id
-        INT productName
+        VARHCAR(255) productName
         INT price_per_unit
         INT quantity
     }
-
 ```
