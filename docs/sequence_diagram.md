@@ -1,4 +1,5 @@
-### 잔액 충전 시퀀스 다이어그램
+## 1. 포인트
+### 포인트 충전 시퀀스 다이어그램
 ```mermaid
 ---
 config:
@@ -6,13 +7,13 @@ config:
 ---
 sequenceDiagram
     autonumber
-    participant User as 사용자
+    actor User as 사용자
     participant PointController as PointController(API)
     participant PointService as PointService
     participant UserPointRepository
-    participant UserPoint as UserPoint 
+    participant UserPoint as UserPoint 도메인
     participant UserPointHistoryRepository
-    participant UserPointHistory as UserPointHistory
+    participant UserPointHistory as UserPointHistory 도메인
 
     %% 사용자 충전 요청
     User->>PointController: 잔액 충전 요청(userId, amount)
@@ -23,48 +24,66 @@ sequenceDiagram
     else 충전 단위 불일치
         PointController-->>User: 실패 - 1,000원 단위만 허용
     else 유효성 검증 통과
-        PointController->>PointService: 충전 처리 요청(userId, amount)
+        PointController->>PointService: 잔액 충전 처리 요청(userId, amount)
     end
 
     %% 하루 충전 한도 검증
-    PointService->>UserPointHistoryRepository: 오늘 누적 충전액 조회(userId)
+    PointService->>UserPointHistoryRepository: 오늘 누적 충전액 집계(userId)
     UserPointHistoryRepository-->>PointService: 오늘 누적 충전액
     alt 하루 한도 초과
         PointService-->>PointController: 실패 - 하루 한도 초과
         PointController-->>User: 실패 - 하루 한도 초과
     else 하루 한도 이내
-        %% 사용자 존재 및 현재 잔액 조회
-        PointService->>UserPointRepository: findByUserId(userId)
+        %% 현재 잔액 및 사용자 조회
+        PointService->>UserPointRepository: UserPoint 조회
         UserPointRepository-->>PointService: UserPoint 도메인
 
-        alt 사용자 없음
-            PointService-->>PointController: 실패 - 사용자 없음
-            PointController-->>User: 실패 - 사용자 없음
-        else 보유 한도 초과
-            PointService->>UserPoint: 보유 한도 초과 여부 확인(amount)
-            alt 보유 한도 초과
-                UserPoint-->>PointService: 실패 - 보유 한도 초과
-                PointService-->>PointController: 실패 - 보유 한도 초과
-                PointController-->>User: 실패 - 보유 한도 초과
-            else 검증 통과
-                %% 잔액 증가 처리
-                PointService->>UserPoint: 잔액 증가(+amount)
-                PointService->>UserPointRepository: 저장(UserPoint)
-                UserPointRepository-->>PointService: 저장 완료
+        %% 도메인 검증
+        PointService->>UserPoint: 잔액 충전 처리 요청
+        activate UserPoint 
+        UserPoint ->> UserPoint : 보유 한도 초과 여부 검증
+        deactivate UserPoint
+        alt 보유 한도 검증 통과
+            UserPoint-->>PointService: 실패 - 보유 한도 초과
+            PointService-->>PointController: 실패 - 보유 한도 초과
+            PointController-->>User: 실패 - 보유 한도 초과
+        else 검증 통과
+            %% 잔액 증가 및 저장
+            activate UserPoint
+            UserPoint ->> UserPoint: 잔액증가(+amount)
+            deactivate UserPoint
+            UserPoint -->> PointService: 잔액  증가된 UserPoint 반환
+            PointService->>UserPointRepository: 저장(UserPoint)
+            UserPointRepository-->>PointService: 저장 완료
 
-                %% 히스토리 기록
-                PointService->>UserPointHistory: UserPointHistory 도메인 생성(userId, amount, CHARGE)
-                PointService->>UserPointHistoryRepository: 저장(UserPointHistory)
-                UserPointHistoryRepository-->>PointService: 저장 완료
+            %% 히스토리 기록
+            PointService->>UserPointHistory: 생성(userId, amount, CHARGE)
+            UserPointHistory -->> PointService: 반환
+            PointService->>UserPointHistoryRepository: 저장(UserPointHistory)
+            UserPointHistoryRepository-->>PointService: 저장 완료
 
-                %% 성공 응답
-                PointService-->>PointController: 충전 성공
-                PointController-->>User: 충전 성공
-            end
+            %% 성공 응답
+            PointService-->>PointController: 충전 성공
+            PointController-->>User: 충전 성공
         end
     end
 ```
+### 포인트 조회 시퀀스 다이어그램
+```mermaid
+---
+config:
+  theme: redux
+---
+sequenceDiagram
+    autonumber
+    actor User 사용자
+    participant UserPoint 
 
+    User ->> UserPoint : 사용자의 잔액 정보 조회
+    UserPoint -->> User: 사용자의 잔액 정보 전달
+```
+
+## 2. 쿠폰
 ### 선착순 쿠폰 발급 시퀀스 다이어그램
 ```mermaid
 ---
@@ -108,11 +127,14 @@ sequenceDiagram
             else 수량 가능
                 %% 4. 쿠폰 발급 처리
                 Coupon ->> Coupon: issuedQuantity 증가
+                deactivate Coupon
+                Coupon -->> CouponService: 업데이트된 쿠폰 반환
                 CouponService ->> CouponRepository: save(Coupon)
                 CouponRepository -->> CouponService: 저장 완료
 
                 %% 5. UserCoupon 도메인 생성
                 CouponService ->> UserCoupon: UserCoupon 도메인 생성
+                UserCoupon -->> CouponService: UserCoupon 도메인 반환
                 CouponService ->> UserCouponRepository: save(UserCoupon)
                 UserCouponRepository -->> CouponService: 저장 완료
 
@@ -121,10 +143,39 @@ sequenceDiagram
                 CouponController -->> User: 발급 성공
             end
         end
-        deactivate Coupon
     end
 ```
 
+### 보유 쿠폰 조회 시퀀스 다이어그램
+```mermaid
+---
+config:
+  theme: redux
+---
+sequenceDiagram
+    autonumber
+    actor User as 사용자
+    participant UserCoupon
+    User ->> UserCoupon : 사용자의 쿠폰 정보 조회
+    UserCoupon -->> User : 사용자의 쿠폰 정보 전달
+```
+
+## 3. 쿠폰
+### 상품 조회 시퀀스 다이어그램
+```mermaid
+---
+config:
+  theme: redux
+---
+sequenceDiagram
+    autonumber
+    actor User as 사용자
+    participant Product
+    User ->> Product : 상품 정보 조회
+    Product -->> User: 상품 정보 전달
+```
+
+## 4. 주문/결제
 ### 주문/결제 시퀀스 다이어그램
 ```mermaid
 ---
@@ -194,6 +245,21 @@ sequenceDiagram
         order ->> data_platform: 주문 정보 전송 (비동기)
     end
 
+```
+
+## 5. 상위 상품
+### 상위 상품 조회 시퀀스 다이어그램
+```mermaid
+---
+config:
+  theme: redux
+---
+sequenceDiagram
+    autonumber
+    actor User as 사용자
+    participant BestProduct
+    User ->> BestProduct : 3일간 상위 상품 정보 조회
+    BestProduct -->> User: 3일간 상위 상품 정보 전달
 ```
 
 ### 상위 상품 스케줄러 시퀀스 다이어그램
