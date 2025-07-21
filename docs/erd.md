@@ -11,7 +11,6 @@ erDiagram
         DATETIME updated_at "수정일"
     }
     USER ||--|| USER_POINT : owns
-    USER ||--o{ USER_POINT_HISTORY : has
     USER ||--o{ USER_COUPON : owns
     USER ||--o{ ORDER : places   
     USER_POINT {
@@ -23,11 +22,11 @@ erDiagram
     USER_POINT ||--o{ USER_POINT_HISTORY : has
     USER_POINT_HISTORY {
         BIGINT id PK
-        BIGINT user_id FK
+        BIGINT user_point_id FK
         BIGINT order_id FK  "사용한 주문에 대한 정보"
         INT amount "충전인 경우 양수, 사용인 경우 음수"
         VARCHAR(10) transaction_type "거래 종류(CHARGE, USE)"
-        TIMESTAMP created_at "생성일"
+        DATETIME created_at "생성일"
     }
     COUPON {
         BIGINT id PK
@@ -46,6 +45,8 @@ erDiagram
         BIGINT id PK
         BIGINT user_id FK
         BIGINT coupon_id FK
+        BIGINT order_id FK
+        INT discount_amount "할인금액"
         DATETIME issued_at "발급 날짜"
         DATETIME expired_at "만료 날짜"
         DATETIME used_at "사용 날짜"
@@ -60,7 +61,6 @@ erDiagram
     }
     ORDER ||--|| ORDER_PAYMENT : has
     ORDER ||--o{ USER_POINT_HISTORY : records
-    ORDER ||--o{ ORDER_COUPON : uses
     ORDER ||--o{ ORDER_PRODUCT : has
     ORDER_PAYMENT {
         BIGINT id PK
@@ -71,14 +71,7 @@ erDiagram
         DATETIME created_at "생성일"
         DATETIME updated_at "수정일"
     }
-    ORDER_COUPON {
-        BIGINT id PK
-        BIGINT order_id FK
-        BIGINT user_coupon_id FK
-        INT discount_amount "할인 금액"
-        DATETIME created_at "생성일"
-    }
-    ORDER ||--o{ ORDER_PAYMENT : records
+    
     ORDER_PRODUCT {
         BIGINT id PK
         BIGINT order_id
