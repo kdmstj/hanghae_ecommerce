@@ -160,7 +160,7 @@ sequenceDiagram
     UserCoupon -->> User : 사용자의 쿠폰 정보 전달
 ```
 
-## 3. 쿠폰
+## 3. 상품
 ### 상품 조회 시퀀스 다이어그램
 ```mermaid
 ---
