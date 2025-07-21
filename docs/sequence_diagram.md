@@ -273,13 +273,16 @@ sequenceDiagram
     participant Scheduler as 스케줄러
     participant OrderProduct as ORDER_PRODUCT 테이블
     participant BestSeller as BEST_SELLER 테이블
+    
+    loop while(every 24hrs)
 
-    Scheduler->>OrderProduct: 매일 24시 최근 3일 주문상품 판매량 집계 쿼리 실행
-    OrderProduct-->>Scheduler: 집계 결과(상품ID, 판매수량)
-    Scheduler->>BestSeller: BEST_SELLER 테이블 초기화
-    BestSeller-->>Scheduler: 초기화 완료
-    loop 상위 5개 상품
-        Scheduler->>BestSeller: 상품ID, 이름, 단가, 판매수량 기록
-        BestSeller-->>Scheduler: 기록 완료
-    end
+	    Scheduler->>OrderProduct: 매일 24시 최근 3일 주문상품 판매량 집계 쿼리 실행
+	    OrderProduct-->>Scheduler: 집계 결과(상품ID, 판매수량)
+	    Scheduler->>BestSeller: BEST_SELLER 테이블 초기화
+	    BestSeller-->>Scheduler: 초기화 완료
+	    loop 상위 5개 상품
+	        Scheduler->>BestSeller: 상품ID, 이름, 단가, 판매수량 기록
+	        BestSeller-->>Scheduler: 기록 완료
+	    end
+	end
 ```
