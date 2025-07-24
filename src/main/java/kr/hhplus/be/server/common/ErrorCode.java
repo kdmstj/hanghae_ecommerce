@@ -8,6 +8,7 @@ public enum ErrorCode {
 
     //product
     PRODUCT_NOT_FOUND(404, "존재하는 상품이 없습니다."),
+    INSUFFICIENT_QUANTITY(400, "재고가 부족합니다."),
 
     //coupon
     COUPON_NOT_FOUND(404, "존재하는 쿠폰이 없습니다."),

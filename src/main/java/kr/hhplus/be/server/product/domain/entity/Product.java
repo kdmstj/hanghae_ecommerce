@@ -4,6 +4,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import kr.hhplus.be.server.common.BusinessException;
+import kr.hhplus.be.server.common.ErrorCode;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -31,4 +33,12 @@ public class Product {
     LocalDateTime createdAt;
 
     LocalDateTime updatedAt;
+
+    public void decrease(int requestQuantity){
+        if (quantity < requestQuantity) {
+            throw new BusinessException(ErrorCode.INSUFFICIENT_QUANTITY);
+        }
+
+        this.quantity -= requestQuantity;
+    }
 }
