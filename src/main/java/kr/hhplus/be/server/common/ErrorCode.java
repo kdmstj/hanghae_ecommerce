@@ -7,7 +7,15 @@ public enum ErrorCode {
     INSUFFICIENT_BALANCE(400, "잔액이 부족합니다."),
 
     //product
-    PRODUCT_NOT_FOUND(404, "존재하는 상품이 없습니다.");
+    PRODUCT_NOT_FOUND(404, "존재하는 상품이 없습니다."),
+
+    //coupon
+    COUPON_NOT_FOUND(404, "존재하는 쿠폰이 없습니다."),
+    ALREADY_ISSUED_COUPON(400, "이미 발급된 쿠폰입니다."),
+    EXCEED_QUANTITY(400, "발급 수량을 초과하였습니다."),
+    ISSUE_PERIOD_NOT_STARTED(400, "발급 시작일보다 이전입니다."),
+    ISSUE_PERIOD_ENDED(400, "발급 만료일보다 이후입니다.");
+
     private final int status;
     private final String message;
 
