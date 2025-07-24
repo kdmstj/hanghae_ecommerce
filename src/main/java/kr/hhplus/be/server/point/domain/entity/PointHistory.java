@@ -1,9 +1,6 @@
 package kr.hhplus.be.server.point.domain.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import kr.hhplus.be.server.point.domain.TransactionType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,6 +23,7 @@ public class PointHistory {
 
     int amount;
 
+    @Enumerated(EnumType.STRING)
     TransactionType transactionType;
 
     LocalDateTime createdAt;
@@ -35,6 +33,7 @@ public class PointHistory {
                 .userPointId(userPointId)
                 .amount(amount)
                 .transactionType(TransactionType.CHARGE)
+                .createdAt(LocalDateTime.now())
                 .build();
     }
 
