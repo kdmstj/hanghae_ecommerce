@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.dto;
+package kr.hhplus.be.server.product.presentation.dto;
 
 public record BestProductResponse(
         long productId,
