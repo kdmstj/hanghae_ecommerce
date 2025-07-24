@@ -26,14 +26,22 @@ public class PointHistory {
     @Enumerated(EnumType.STRING)
     TransactionType transactionType;
 
-    LocalDateTime createdAt;
+    LocalDateTime createdAt = LocalDateTime.now();
 
     public static PointHistory createChargeHistory(long userPointId, int amount){
         return PointHistory.builder()
                 .userPointId(userPointId)
                 .amount(amount)
                 .transactionType(TransactionType.CHARGE)
-                .createdAt(LocalDateTime.now())
+                .build();
+    }
+
+    public static PointHistory createUseHistory(long orderId, long userPointId, int amount){
+        return PointHistory.builder()
+                .userPointId(userPointId)
+                .orderId(orderId)
+                .amount(-amount)
+                .transactionType(TransactionType.USE)
                 .build();
     }
 
