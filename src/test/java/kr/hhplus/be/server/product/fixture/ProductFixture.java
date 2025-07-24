@@ -32,4 +32,13 @@ public class ProductFixture {
                 .quantity(100)
                 .build();
     }
+
+    public static Product withQuantity(int quantity){
+        return Product.builder()
+                .id(1L)
+                .productName("productName")
+                .pricePerUnit(1000)
+                .quantity(quantity)
+                .build();
+    }
 }
