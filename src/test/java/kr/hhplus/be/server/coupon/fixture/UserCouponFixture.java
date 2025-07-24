@@ -2,7 +2,6 @@ package kr.hhplus.be.server.coupon.fixture;
 
 import kr.hhplus.be.server.coupon.domain.entity.UserCoupon;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +13,7 @@ public class UserCouponFixture {
                 .userId(userId)
                 .couponId(couponId)
                 .issuedAt(LocalDateTime.now())
+                .expiredAt(LocalDateTime.now().plusWeeks(1))
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -30,6 +30,31 @@ public class UserCouponFixture {
                 .updatedAt(LocalDateTime.now())
                 .build();
 
+    }
+
+    public static UserCoupon withExpiredAt(LocalDateTime expiredAt){
+        return UserCoupon.builder()
+                .id(1L)
+                .userId(1L)
+                .couponId(1L)
+                .issuedAt(LocalDateTime.now())
+                .expiredAt(expiredAt)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+    }
+
+    public static UserCoupon withUsedAt(LocalDateTime usedAt){
+        return UserCoupon.builder()
+                .id(1L)
+                .userId(1L)
+                .couponId(1L)
+                .issuedAt(LocalDateTime.now())
+                .expiredAt(LocalDateTime.now().plusWeeks(1))
+                .usedAt(usedAt)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
     }
 
     public static List<UserCoupon> createListWithUserId(int n, long userId) {
