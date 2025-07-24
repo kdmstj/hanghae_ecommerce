@@ -46,7 +46,7 @@ public class PointServiceTest {
             int chargeAmount = 1_000;
             UserPoint current = UserPointFixture.withUserIdAndBalance(userId, 5_000);
 
-            given(userPointRepository.getOneByUserId(userId))
+            given(userPointRepository.findOneByUserId(userId))
                     .willReturn(Optional.of(current));
 
             PointChargeCommand command = new PointChargeCommand(userId, chargeAmount);

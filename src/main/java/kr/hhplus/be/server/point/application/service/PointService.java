@@ -19,7 +19,7 @@ public class PointService {
     private final PointHistoryRepository pointHistoryRepository;
 
     public UserPoint get(long userId) {
-        return userPointRepository.getOneByUserId(userId).orElseThrow(() ->
+        return userPointRepository.findOneByUserId(userId).orElseThrow(() ->
                 new BusinessException(ErrorCode.USER_POINT_NOT_FOUND));
     }
 
