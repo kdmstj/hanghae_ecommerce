@@ -86,7 +86,7 @@ erDiagram
         BIGINT id PK
         VARCHAR(255) productName "상품 이름"
         INT price_per_unit "개당 가격"
-        BIGINT quantity "수량"
+        INT quantity "수량"
         DATETIME created_at "생성일"
         DATETIME updated_at "수정일"
     }
