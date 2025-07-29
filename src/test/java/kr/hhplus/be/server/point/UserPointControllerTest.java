@@ -3,6 +3,7 @@ package kr.hhplus.be.server.point;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.hhplus.be.server.common.BusinessException;
 import kr.hhplus.be.server.common.ErrorCode;
+import kr.hhplus.be.server.point.application.result.UserPointResult;
 import kr.hhplus.be.server.point.application.service.PointService;
 import kr.hhplus.be.server.point.domain.entity.UserPoint;
 import kr.hhplus.be.server.point.fixture.UserPointFixture;
@@ -40,7 +41,7 @@ public class UserPointControllerTest {
 
     @Nested
     @DisplayName("포인트 조회")
-    class Get {
+    class GetUserPoint {
 
         @Test
         @DisplayName("성공")
@@ -50,7 +51,7 @@ public class UserPointControllerTest {
             int balance = 10_000;
             UserPoint userPoint = UserPointFixture.withUserIdAndBalance(userId, balance);
 
-            when(pointService.get(userId)).thenReturn(userPoint);
+            when(pointService.get(userId)).thenReturn(UserPointResult.from(userPoint));
 
             //when & then
             mockMvc.perform(MockMvcRequestBuilders.get(BASE_URI + "/{userId}/points", userId)
@@ -91,7 +92,7 @@ public class UserPointControllerTest {
             UserPoint userPoint = UserPointFixture.withUserIdAndBalance(userId, originAmount + chargeAmount);
 
             UserPointRequest request = new UserPointRequest(chargeAmount);
-            when(pointService.charge(request.toCommand(userId))).thenReturn(userPoint);
+            when(pointService.charge(request.toCommand(userId))).thenReturn(UserPointResult.from(userPoint));
 
             //when & then
             mockMvc.perform(MockMvcRequestBuilders.patch(BASE_URI + "/{userId}/points/charge", userId)

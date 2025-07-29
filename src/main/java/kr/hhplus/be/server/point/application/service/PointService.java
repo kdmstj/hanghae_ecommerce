@@ -5,6 +5,7 @@ import kr.hhplus.be.server.common.BusinessException;
 import kr.hhplus.be.server.common.ErrorCode;
 import kr.hhplus.be.server.point.application.command.PointChargeCommand;
 import kr.hhplus.be.server.point.application.command.PointUseCommand;
+import kr.hhplus.be.server.point.application.result.UserPointResult;
 import kr.hhplus.be.server.point.domain.entity.PointHistory;
 import kr.hhplus.be.server.point.domain.entity.UserPoint;
 import kr.hhplus.be.server.point.domain.repository.PointHistoryRepository;
@@ -19,28 +20,33 @@ public class PointService {
     private final UserPointRepository userPointRepository;
     private final PointHistoryRepository pointHistoryRepository;
 
-    public UserPoint get(long userId) {
-        return userPointRepository.findOneByUserId(userId).orElseThrow(() ->
-                new BusinessException(ErrorCode.USER_POINT_NOT_FOUND));
+    public UserPointResult get(long userId) {
+
+        return UserPointResult.from(find(userId));
     }
 
     @Transactional
-    public UserPoint charge(PointChargeCommand command) {
-        UserPoint userPoint = get(command.userId());
+    public UserPointResult charge(PointChargeCommand command) {
+        UserPoint userPoint = find(command.userId());
 
         userPoint.increaseBalance(command.amount());
         pointHistoryRepository.save(PointHistory.createChargeHistory(userPoint.getId(), command.amount()));
 
-        return userPoint;
+        return UserPointResult.from(userPoint);
     }
 
     @Transactional
-    public UserPoint use(Long orderId, PointUseCommand command){
-        UserPoint userPoint = get(command.userId());
+    public UserPointResult use(Long orderId, PointUseCommand command){
+        UserPoint userPoint = find(command.userId());
 
         userPoint.decreaseBalance(command.amount());
         pointHistoryRepository.save(PointHistory.createUseHistory(orderId, userPoint.getId(), command.amount()));
 
-        return userPoint;
+        return UserPointResult.from(userPoint);
+    }
+
+    private UserPoint find(long userId){
+        return userPointRepository.findOneByUserId(userId).orElseThrow(() ->
+                new BusinessException(ErrorCode.USER_POINT_NOT_FOUND));
     }
 }
