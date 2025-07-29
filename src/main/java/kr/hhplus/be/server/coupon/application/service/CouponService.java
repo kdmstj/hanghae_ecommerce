@@ -2,6 +2,7 @@ package kr.hhplus.be.server.coupon.application.service;
 
 import kr.hhplus.be.server.common.BusinessException;
 import kr.hhplus.be.server.common.ErrorCode;
+import kr.hhplus.be.server.coupon.application.result.UserCouponResult;
 import kr.hhplus.be.server.coupon.domain.entity.Coupon;
 import kr.hhplus.be.server.coupon.domain.entity.UserCoupon;
 import kr.hhplus.be.server.coupon.domain.repository.CouponRepository;
@@ -22,13 +23,16 @@ public class CouponService {
     private final UserCouponRepository userCouponRepository;
     private final CouponRepository couponRepository;
 
-    public List<UserCoupon> getValidCoupons(long userId) {
+    public List<UserCouponResult> getValidCoupons(long userId) {
 
-        return userCouponRepository.findAllByUserIdAndUsedAtIsNullAndExpiredAtAfter(userId, LocalDateTime.now());
+        return userCouponRepository.findAllByUserIdAndUsedAtIsNullAndExpiredAtAfter(userId, LocalDateTime.now())
+                .stream()
+                .map(UserCouponResult::from)
+                .toList();
     }
 
     @Transactional
-    public UserCoupon issue(long userId, long couponId) {
+    public UserCouponResult issue(long userId, long couponId) {
 
         Coupon coupon = getCoupon(couponId);
 
@@ -39,7 +43,7 @@ public class CouponService {
         coupon.increaseIssuedQuantity();
         UserCoupon issuedCoupon = UserCoupon.create(userId, couponId, coupon.getIssuedEndedAt());
 
-        return userCouponRepository.save(issuedCoupon);
+        return UserCouponResult.from(userCouponRepository.save(issuedCoupon));
     }
 
     public List<UserCoupon> use(long orderId, List<CouponUseCommand> commands){

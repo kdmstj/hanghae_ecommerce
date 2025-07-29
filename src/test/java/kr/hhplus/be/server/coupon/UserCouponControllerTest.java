@@ -3,6 +3,7 @@ package kr.hhplus.be.server.coupon;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.hhplus.be.server.common.BusinessException;
 import kr.hhplus.be.server.common.ErrorCode;
+import kr.hhplus.be.server.coupon.application.result.UserCouponResult;
 import kr.hhplus.be.server.coupon.application.service.CouponService;
 import kr.hhplus.be.server.coupon.domain.entity.UserCoupon;
 import kr.hhplus.be.server.coupon.fixture.UserCouponFixture;
@@ -49,7 +50,7 @@ public class UserCouponControllerTest {
             long userId = 1l;
             List<UserCoupon> list = UserCouponFixture.createListWithUserId(5, userId);
 
-            when(couponService.getValidCoupons(userId)).thenReturn(list);
+            when(couponService.getValidCoupons(userId)).thenReturn(list.stream().map(UserCouponResult::from).toList());
 
             // when & then
             mockMvc.perform(MockMvcRequestBuilders.get(BASE_URI, userId)
@@ -73,7 +74,7 @@ public class UserCouponControllerTest {
             long couponId = 1L;
             UserCoupon userCoupon = UserCouponFixture.withUserIdAndCouponId(userId, couponId);
 
-            when(couponService.issue(userId, couponId)).thenReturn(userCoupon);
+            when(couponService.issue(userId, couponId)).thenReturn(UserCouponResult.from(userCoupon));
 
             // when & then
             mockMvc.perform(MockMvcRequestBuilders.put(BASE_URI + "/{couponId}/issue", userId, couponId)

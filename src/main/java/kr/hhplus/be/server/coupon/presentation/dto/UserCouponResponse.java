@@ -1,6 +1,6 @@
 package kr.hhplus.be.server.coupon.presentation.dto;
 
-import kr.hhplus.be.server.coupon.domain.entity.UserCoupon;
+import kr.hhplus.be.server.coupon.application.result.UserCouponResult;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -12,18 +12,18 @@ public record UserCouponResponse(
         LocalDateTime issuedAt,
         LocalDateTime expiredAt
 ) {
-    public static UserCouponResponse from(UserCoupon userCoupon) {
+    public static UserCouponResponse from(UserCouponResult result) {
         return new UserCouponResponse(
-                userCoupon.getId(),
-                userCoupon.getUserId(),
-                userCoupon.getCouponId(),
-                userCoupon.getIssuedAt(),
-                userCoupon.getExpiredAt()
+                result.id(),
+                result.userId(),
+                result.couponId(),
+                result.issuedAt(),
+                result.expiredAt()
         );
     }
 
-    public static List<UserCouponResponse> from(List<UserCoupon> userCoupons){
-        return userCoupons.stream()
+    public static List<UserCouponResponse> from(List<UserCouponResult> resultList){
+        return resultList.stream()
                 .map(UserCouponResponse::from)
                 .toList();
     }
