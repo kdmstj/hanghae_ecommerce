@@ -31,7 +31,7 @@ public class ProductTest {
             Product product = ProductFixture.withQuantity(originalQuantity);
 
             //when
-            product.decrease(decreaseQuantity);
+            product.decreaseQuantity(decreaseQuantity);
 
             //then
             assertThat(product.getQuantity()).isEqualTo(originalQuantity - decreaseQuantity);
@@ -48,7 +48,7 @@ public class ProductTest {
             Product product = ProductFixture.withQuantity(originalQuantity);
 
             //when & then
-            assertThatThrownBy(() -> product.decrease(decreaseQuantity))
+            assertThatThrownBy(() -> product.decreaseQuantity(decreaseQuantity))
                     .isInstanceOf(BusinessException.class)
                     .hasMessageContaining(ErrorCode.INSUFFICIENT_QUANTITY.getMessage());
         }

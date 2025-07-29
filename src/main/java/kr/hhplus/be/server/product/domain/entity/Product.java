@@ -34,7 +34,7 @@ public class Product {
 
     LocalDateTime updatedAt;
 
-    public void decrease(int requestQuantity){
+    public void decreaseQuantity(int requestQuantity){
         if (quantity < requestQuantity) {
             throw new BusinessException(ErrorCode.INSUFFICIENT_QUANTITY);
         }

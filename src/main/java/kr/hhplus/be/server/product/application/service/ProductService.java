@@ -35,7 +35,7 @@ public class ProductService {
         for (ProductDecreaseCommand command : commands) {
             Product product = get(command.productId());
 
-            product.decrease(command.quantity());
+            product.decreaseQuantity(command.quantity());
             reservedProducts.add(product);
         }
 
