@@ -2,6 +2,7 @@ package kr.hhplus.be.server.product;
 
 import kr.hhplus.be.server.common.BusinessException;
 import kr.hhplus.be.server.common.ErrorCode;
+import kr.hhplus.be.server.product.application.result.ProductResult;
 import kr.hhplus.be.server.product.presentation.controller.ProductController;
 import kr.hhplus.be.server.product.application.service.ProductService;
 import kr.hhplus.be.server.product.domain.entity.Product;
@@ -41,7 +42,7 @@ public class ProductControllerTest {
         void 재고_목록_조회_성공() throws Exception {
             // given
             List<Product> list = ProductFixture.createList(5);
-            when(productService.get()).thenReturn(list);
+            when(productService.get()).thenReturn(list.stream().map(ProductResult::from).toList());
 
             // when & then
             mockMvc.perform(MockMvcRequestBuilders.get(BASE_URI)
@@ -65,11 +66,11 @@ public class ProductControllerTest {
             long id = 1L;
             Product product = ProductFixture.withId(id);
 
-            when(productService.get(id)).thenReturn(product);
+            when(productService.get(id)).thenReturn(ProductResult.from(product));
 
             // when & then
             mockMvc.perform(MockMvcRequestBuilders.get(BASE_URI + "/{id}", id)
-                    .contentType(MediaType.APPLICATION_JSON))
+                            .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(id))
                     .andExpect(jsonPath("$.productName").value(product.getProductName()))
@@ -87,7 +88,7 @@ public class ProductControllerTest {
 
             // when & then
             mockMvc.perform(MockMvcRequestBuilders.get(BASE_URI + "/{id}", id)
-                    .contentType(MediaType.APPLICATION_JSON))
+                            .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.message").value(ErrorCode.PRODUCT_NOT_FOUND.getMessage()));
         }

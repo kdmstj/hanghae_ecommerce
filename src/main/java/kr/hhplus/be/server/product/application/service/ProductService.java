@@ -3,6 +3,7 @@ package kr.hhplus.be.server.product.application.service;
 import kr.hhplus.be.server.common.BusinessException;
 import kr.hhplus.be.server.common.ErrorCode;
 import kr.hhplus.be.server.order.application.command.ProductDecreaseCommand;
+import kr.hhplus.be.server.product.application.result.ProductResult;
 import kr.hhplus.be.server.product.domain.entity.Product;
 import kr.hhplus.be.server.product.domain.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,14 +19,22 @@ public class ProductService {
 
     private final ProductRepository productRepository;
 
-    public List<Product> get() {
+    public List<ProductResult> get() {
 
-        return productRepository.findAll();
+        return productRepository.findAll()
+                .stream()
+                .map(ProductResult::from)
+                .toList();
     }
 
-    public Product get(long id) {
+    public ProductResult get(long id) {
 
-        return productRepository.findById(id).orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));
+        return ProductResult.from(find(id));
+    }
+
+    private Product find(long id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));
     }
 
     @Transactional
@@ -33,7 +42,7 @@ public class ProductService {
         List<Product> reservedProducts = new ArrayList<>();
 
         for (ProductDecreaseCommand command : commands) {
-            Product product = get(command.productId());
+            Product product = find(command.productId());
 
             product.decreaseQuantity(command.quantity());
             reservedProducts.add(product);

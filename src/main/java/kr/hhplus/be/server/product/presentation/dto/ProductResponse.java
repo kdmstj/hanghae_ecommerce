@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.product.presentation.dto;
 
+import kr.hhplus.be.server.product.application.result.ProductResult;
 import kr.hhplus.be.server.product.domain.entity.Product;
 
 import java.util.List;
@@ -10,17 +11,17 @@ public record ProductResponse(
         int pricePerUnit,
         int quantity
 ) {
-    public static ProductResponse from(Product product) {
+    public static ProductResponse from(ProductResult result) {
         return new ProductResponse(
-                product.getId(),
-                product.getProductName(),
-                product.getPricePerUnit(),
-                product.getQuantity()
+                result.id(),
+                result.productName(),
+                result.pricePerUnit(),
+                result.quantity()
         );
     }
 
-    public static List<ProductResponse> from(List<Product> products) {
-        return products.stream()
+    public static List<ProductResponse> from(List<ProductResult> resultList) {
+        return resultList.stream()
                 .map(ProductResponse::from)
                 .toList();
     }
