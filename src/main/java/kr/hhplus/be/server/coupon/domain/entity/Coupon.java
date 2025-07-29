@@ -37,7 +37,7 @@ public class Coupon {
 
     private LocalDateTime updatedAt;
 
-    public void issue() {
+    public void increaseIssuedQuantity() {
         validateIssuePeriod();
         validateQuantity();
 

@@ -29,7 +29,7 @@ public class CouponTest {
         @DisplayName("성공 - 수량 조건 만족 시 발급 성공")
         void 쿠폰_발급_성공(int totalQuantity, int issuedQuantity) {
             Coupon coupon = CouponFixture.withTotalQuantityAndIssuedQuantity(totalQuantity, issuedQuantity);
-            coupon.issue();
+            coupon.increaseIssuedQuantity();
             assertThat(coupon.getIssuedQuantity()).isEqualTo(issuedQuantity + 1);
         }
 
@@ -41,7 +41,7 @@ public class CouponTest {
         @DisplayName("실패 - 수량 초과 시 예외 발생")
         void 쿠폰_발급_실패_수량_초과(int totalQuantity, int issuedQuantity) {
             Coupon coupon = CouponFixture.withTotalQuantityAndIssuedQuantity(totalQuantity, issuedQuantity);
-            assertThatThrownBy(coupon::issue)
+            assertThatThrownBy(coupon::increaseIssuedQuantity)
                     .isInstanceOf(BusinessException.class)
                     .hasMessageContaining(ErrorCode.EXCEED_QUANTITY.getMessage());
         }
@@ -59,7 +59,7 @@ public class CouponTest {
         @DisplayName("성공 - 경계 시간 포함 테스트")
         void 쿠폰_발급_성공_시간_경계(String title, LocalDateTime start, LocalDateTime end) {
             Coupon coupon = CouponFixture.withIssuedQuantityAndIssuedStartedAtAndIssuedEndedAt(0, start, end);
-            coupon.issue();
+            coupon.increaseIssuedQuantity();
             assertThat(coupon.getIssuedQuantity()).isEqualTo(1);
         }
 
@@ -76,7 +76,7 @@ public class CouponTest {
         @DisplayName("실패 - 시간 조건 위반 테스트")
         void 쿠폰_발급_실패_시간_조건(String title, LocalDateTime start, LocalDateTime end, ErrorCode errorCode) {
             Coupon coupon = CouponFixture.withIssuedQuantityAndIssuedStartedAtAndIssuedEndedAt(0, start, end);
-            assertThatThrownBy(coupon::issue)
+            assertThatThrownBy(coupon::increaseIssuedQuantity)
                     .isInstanceOf(BusinessException.class)
                     .hasMessageContaining(errorCode.getMessage());
         }

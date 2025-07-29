@@ -36,7 +36,7 @@ public class CouponService {
             throw new BusinessException(ErrorCode.ALREADY_ISSUED_COUPON);
         }
 
-        coupon.issue();
+        coupon.increaseIssuedQuantity();
         UserCoupon issuedCoupon = UserCoupon.create(userId, couponId, coupon.getIssuedEndedAt());
 
         return userCouponRepository.save(issuedCoupon);
