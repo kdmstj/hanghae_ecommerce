@@ -33,7 +33,7 @@ class UserPointTest {
             UserPoint userPoint = UserPointFixture.withBalance(originAmount);
 
             // when
-            userPoint.charge(chargeAmount);
+            userPoint.increaseBalance(chargeAmount);
 
             // then
             assertThat(userPoint.getBalance()).isEqualTo(originAmount + chargeAmount);
@@ -51,7 +51,7 @@ class UserPointTest {
             UserPoint userPoint = UserPointFixture.withBalance(originAmount);
 
             // when & then
-            assertThatThrownBy(() -> userPoint.charge(chargeAmount))
+            assertThatThrownBy(() -> userPoint.increaseBalance(chargeAmount))
                     .isInstanceOf(BusinessException.class)
                     .hasMessageContaining(ErrorCode.EXCEED_MAX_BALANCE.getMessage());
         }
@@ -72,7 +72,7 @@ class UserPointTest {
             UserPoint userPoint = UserPointFixture.withBalance(originAmount);
 
             //when
-            userPoint.use(useAmount);
+            userPoint.decreaseBalance(useAmount);
 
             //then
             assertThat(userPoint.getBalance()).isEqualTo(originAmount - useAmount);
@@ -89,7 +89,7 @@ class UserPointTest {
             UserPoint userPoint = UserPointFixture.withBalance(originAmount);
 
             //when & then
-            assertThatThrownBy(() -> userPoint.use(useAmount))
+            assertThatThrownBy(() -> userPoint.decreaseBalance(useAmount))
                     .isInstanceOf(BusinessException.class)
                     .hasMessageContaining(ErrorCode.INSUFFICIENT_BALANCE.getMessage());
         }

@@ -30,7 +30,7 @@ public class UserPoint {
 
     private LocalDateTime updatedAt;
 
-    public void charge(int chargeAmount) {
+    public void increaseBalance(int chargeAmount) {
         if (balance + chargeAmount > MAX_BALANCE) {
             throw new BusinessException(ErrorCode.EXCEED_MAX_BALANCE);
         }
@@ -38,7 +38,7 @@ public class UserPoint {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public void use(int useAmount) {
+    public void decreaseBalance(int useAmount) {
         if (balance - useAmount < 0) {
             throw new BusinessException(ErrorCode.INSUFFICIENT_BALANCE);
         }

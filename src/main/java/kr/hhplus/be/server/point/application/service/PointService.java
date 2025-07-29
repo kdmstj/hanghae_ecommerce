@@ -28,7 +28,7 @@ public class PointService {
     public UserPoint charge(PointChargeCommand command) {
         UserPoint userPoint = get(command.userId());
 
-        userPoint.charge(command.amount());
+        userPoint.increaseBalance(command.amount());
         pointHistoryRepository.save(PointHistory.createChargeHistory(userPoint.getId(), command.amount()));
 
         return userPoint;
@@ -38,7 +38,7 @@ public class PointService {
     public UserPoint use(Long orderId, PointUseCommand command){
         UserPoint userPoint = get(command.userId());
 
-        userPoint.use(command.amount());
+        userPoint.decreaseBalance(command.amount());
         pointHistoryRepository.save(PointHistory.createUseHistory(orderId, userPoint.getId(), command.amount()));
 
         return userPoint;
