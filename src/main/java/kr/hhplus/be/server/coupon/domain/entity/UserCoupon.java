@@ -35,8 +35,6 @@ public class UserCoupon {
 
     LocalDateTime expiredAt;
 
-    LocalDateTime usedAt;
-
     LocalDateTime createdAt;
 
     LocalDateTime updatedAt;
@@ -50,20 +48,5 @@ public class UserCoupon {
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
-    }
-
-    public void use(long orderId, int discountAmount){
-        if(usedAt != null){
-            throw new BusinessException(ErrorCode.ALREADY_USED);
-        }
-
-        if(expiredAt.isBefore(LocalDateTime.now())){
-            throw new BusinessException(ErrorCode.ALREADY_EXPIRED);
-        }
-
-        this.orderId = orderId;
-        this.discountAmount = discountAmount;
-        this.usedAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
     }
 }
