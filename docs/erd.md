@@ -59,6 +59,7 @@ erDiagram
         DATETIME created_at "생성일"
         DATETIME updated_at "수정일"
     }
+    ORDER ||--o{ USER_COUPON : records
     ORDER ||--|| ORDER_PAYMENT : has
     ORDER ||--o{ USER_POINT_HISTORY : records
     ORDER ||--o{ ORDER_PRODUCT : has
@@ -76,9 +77,7 @@ erDiagram
         BIGINT id PK
         BIGINT order_id
         BIGINT product_id
-        INT price_per_unit "개당 가격"
-        INT quantity "수량"
-        INT total_price "총 가격"
+        INT quantity
         DATETIME created_at "생성일"
     }
     PRODUCT ||--o{ ORDER_PRODUCT : included_in
@@ -86,7 +85,7 @@ erDiagram
         BIGINT id PK
         VARCHAR(255) productName "상품 이름"
         INT price_per_unit "개당 가격"
-        BIGINT quantity "수량"
+        INT quantity "수량"
         DATETIME created_at "생성일"
         DATETIME updated_at "수정일"
     }
