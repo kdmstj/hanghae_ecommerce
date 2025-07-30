@@ -6,7 +6,7 @@ import java.util.List;
 
 public record OrderCreateCommand(
         PaymentCreateCommand payment,
-        List<ProductDecreaseCommand> products,
+        List<OrderProductCommand> products,
         List<CouponUseCommand> coupons,
         PointUseCommand point
 ) {

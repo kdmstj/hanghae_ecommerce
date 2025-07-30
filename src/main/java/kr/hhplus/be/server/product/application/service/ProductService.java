@@ -2,7 +2,7 @@ package kr.hhplus.be.server.product.application.service;
 
 import kr.hhplus.be.server.common.BusinessException;
 import kr.hhplus.be.server.common.ErrorCode;
-import kr.hhplus.be.server.order.application.command.ProductDecreaseCommand;
+import kr.hhplus.be.server.order.application.command.OrderProductCommand;
 import kr.hhplus.be.server.product.application.result.ProductResult;
 import kr.hhplus.be.server.product.domain.entity.Product;
 import kr.hhplus.be.server.product.domain.repository.ProductRepository;
@@ -38,17 +38,12 @@ public class ProductService {
     }
 
     @Transactional
-    public List<Product> reserve(List<ProductDecreaseCommand> commands) {
-        List<Product> reservedProducts = new ArrayList<>();
+    public void decreaseQuantity(List<OrderProductCommand> commands) {
 
-        for (ProductDecreaseCommand command : commands) {
+        for (OrderProductCommand command : commands) {
             Product product = find(command.productId());
-
             product.decreaseQuantity(command.quantity());
-            reservedProducts.add(product);
         }
-
-        return reservedProducts;
     }
 
 }

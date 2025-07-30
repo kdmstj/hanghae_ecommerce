@@ -1,6 +1,6 @@
 package kr.hhplus.be.server.order.application.service;
 
-import kr.hhplus.be.server.order.application.command.ProductDecreaseCommand;
+import kr.hhplus.be.server.order.application.command.OrderProductCommand;
 import kr.hhplus.be.server.order.domain.entity.OrderProduct;
 import kr.hhplus.be.server.order.domain.repository.OrderProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +15,7 @@ public class OrderProductService {
 
     private final OrderProductRepository orderProductRepository;
 
-    public List<OrderProduct> create(long orderId, List<ProductDecreaseCommand> commands) {
+    public List<OrderProduct> create(long orderId, List<OrderProductCommand> commands) {
         List<OrderProduct> orderProducts = commands.stream()
                 .map(command -> OrderProduct.create(
                         orderId,
