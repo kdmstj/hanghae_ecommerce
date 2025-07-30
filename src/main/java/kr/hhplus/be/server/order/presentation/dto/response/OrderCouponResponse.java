@@ -1,12 +1,14 @@
 package kr.hhplus.be.server.order.presentation.dto.response;
 
-import kr.hhplus.be.server.coupon.domain.entity.UserCoupon;
+import kr.hhplus.be.server.coupon.application.result.UserCouponResult;
 
 public record OrderCouponResponse(
         Long userCouponId,
         int discountAmount
 ) {
-    public static OrderCouponResponse from(UserCoupon userCoupon){
-        return new OrderCouponResponse(userCoupon.getId(), userCoupon.getDiscountAmount());
+    public static OrderCouponResponse from(UserCouponResult userCouponResult) {
+        return new OrderCouponResponse(
+                userCouponResult.id(),
+                userCouponResult.discountAmount());
     }
 }

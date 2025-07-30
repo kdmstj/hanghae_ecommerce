@@ -1,6 +1,6 @@
 package kr.hhplus.be.server.order.presentation.dto.response;
 
-import kr.hhplus.be.server.order.domain.entity.OrderPayment;
+import kr.hhplus.be.server.order.application.result.OrderPaymentResult;
 
 public record OrderPaymentResponse(
         Long id,
@@ -8,7 +8,12 @@ public record OrderPaymentResponse(
         int discountAmount,
         int paymentAmount
 ) {
-    public static OrderPaymentResponse from(OrderPayment op) {
-        return new OrderPaymentResponse(op.getId(), op.getOrderAmount(), op.getDiscountAmount(), op.getPaymentAmount());
+    public static OrderPaymentResponse from(OrderPaymentResult orderPaymentResult) {
+        return new OrderPaymentResponse(
+                orderPaymentResult.id(),
+                orderPaymentResult.orderAmount(),
+                orderPaymentResult.discountAmount(),
+                orderPaymentResult.paymentAmount()
+        );
     }
 }

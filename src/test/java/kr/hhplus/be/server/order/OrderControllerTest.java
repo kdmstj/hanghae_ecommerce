@@ -2,6 +2,8 @@ package kr.hhplus.be.server.order;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.hhplus.be.server.order.application.facade.OrderFacade;
+import kr.hhplus.be.server.order.application.result.OrderPaymentResult;
+import kr.hhplus.be.server.order.application.result.OrderProductResult;
 import kr.hhplus.be.server.order.application.result.OrderResult;
 import kr.hhplus.be.server.order.domain.entity.Order;
 import kr.hhplus.be.server.order.domain.entity.OrderPayment;
@@ -23,7 +25,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.util.List;
 
-import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -64,7 +65,9 @@ public class OrderControllerTest {
             );
             OrderPayment payment = OrderPayment.create(orderId, 10000, 3000, 7000);
 
-            OrderResult result = new OrderResult(order, products, payment, List.of());
+            List<OrderProductResult> productResults = products.stream().map(OrderProductResult::from).toList();
+            OrderPaymentResult paymentResult = OrderPaymentResult.from(payment);
+            OrderResult result = new OrderResult(orderId, userId, productResults, paymentResult, List.of());
 
             when(orderFacade.place(userId, request.toCommand(userId))).thenReturn(result);
 
