@@ -1,0 +1,43 @@
+package kr.hhplus.be.server.coupon.domain.entity;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import kr.hhplus.be.server.common.BusinessException;
+import kr.hhplus.be.server.common.ErrorCode;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+
+@Entity
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Getter
+public class CouponQuantity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
+
+    private long couponId;
+
+    private int totalQuantity;
+
+    private int issuedQuantity;
+
+    LocalDateTime createdAt;
+
+    LocalDateTime updatedAt;
+
+    public void increaseIssuedQuantity() {
+        if (issuedQuantity >= totalQuantity) {
+            throw new BusinessException(ErrorCode.EXCEED_QUANTITY);
+        }
+
+        this.issuedQuantity += 1;
+        this.updatedAt = LocalDateTime.now();
+    }
+}

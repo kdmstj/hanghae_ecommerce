@@ -34,13 +34,16 @@ public class CouponService {
     @Transactional
     public UserCouponResult issue(long userId, long couponId) {
 
-        Coupon coupon = getCoupon(couponId);
-
         if (userCouponRepository.existsByUserIdAndCouponId(userId, couponId)) {
             throw new BusinessException(ErrorCode.ALREADY_ISSUED_COUPON);
         }
 
-        coupon.increaseIssuedQuantity();
+        Coupon coupon = getCoupon(couponId);
+        CouponQuantity couponQuantity = couponQuantityRepository.findOneByCouponId(couponId);
+
+        coupon.validateIssuePeriod();
+        couponQuantity.increaseIssuedQuantity();
+
         UserCoupon issuedCoupon = UserCoupon.create(userId, couponId, coupon.getIssuedEndedAt());
 
         return UserCouponResult.from(userCouponRepository.save(issuedCoupon));
