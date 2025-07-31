@@ -1,8 +1,7 @@
-package kr.hhplus.be.server.coupon;
+package kr.hhplus.be.server.coupon.domain.entity;
 
 import kr.hhplus.be.server.common.BusinessException;
 import kr.hhplus.be.server.common.ErrorCode;
-import kr.hhplus.be.server.coupon.domain.entity.Coupon;
 import kr.hhplus.be.server.coupon.fixture.CouponFixture;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -33,7 +32,7 @@ public class CouponTest {
         @DisplayName("성공 - 경계 시간 포함 테스트")
         void 쿠폰_발급_성공_시간_경계(String title, LocalDateTime start, LocalDateTime end) {
             // given
-            Coupon coupon = CouponFixture.withIssuedQuantityAndIssuedStartedAtAndIssuedEndedAt(0, start, end);
+            Coupon coupon = CouponFixture.withIssuedStartedAtAndIssuedEndedAt(start, end);
 
             // when & then
             assertThatCode(coupon::validateIssuePeriod)
@@ -53,7 +52,7 @@ public class CouponTest {
         @DisplayName("실패 - 시간 조건 위반 테스트")
         void 쿠폰_발급_실패_시간_조건(String title, LocalDateTime start, LocalDateTime end, ErrorCode errorCode) {
             // given
-            Coupon coupon = CouponFixture.withIssuedQuantityAndIssuedStartedAtAndIssuedEndedAt(0, start, end);
+            Coupon coupon = CouponFixture.withIssuedStartedAtAndIssuedEndedAt(start, end);
 
             // when & then
             assertThatThrownBy(coupon::validateIssuePeriod)
