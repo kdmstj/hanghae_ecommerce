@@ -257,6 +257,39 @@ public class CouponServiceIntegrationTest {
                         .isInstanceOf(BusinessException.class)
                         .hasMessageContaining(ErrorCode.ALREADY_EXPIRED.getMessage());
             }
+
+            @Test
+            @DisplayName("실패 - 실패된 경우 모두 롤백된다.")
+            void 쿠폰_사용_실패_롤백_검증() {
+                // given
+                Coupon coupon1 = couponRepository.save(CouponFixture.validPeriod());
+                Coupon coupon2 = couponRepository.save(CouponFixture.validPeriod());
+
+                long userId = 1L;
+
+                UserCoupon userCoupon1 = userCouponRepository.save(UserCouponFixture.withUserIdAndCouponId(userId, coupon1.getId()));
+                UserCoupon userCoupon2 = userCouponRepository.save(UserCouponFixture.withUserIdAndCouponId(userId, coupon2.getId()));
+
+                userCouponStateRepository.save(UserCouponStateFixture.withUserCouponIdAndWithUserCouponStatus(userCoupon1.getId(), UserCouponStatus.ISSUED));
+                userCouponStateRepository.save(UserCouponStateFixture.withUserCouponIdAndWithUserCouponStatus(userCoupon2.getId(), UserCouponStatus.USED)); // 실패 유도
+
+                List<CouponUseCommand> commands = List.of(
+                        new CouponUseCommand(userCoupon1.getId(), 1000),
+                        new CouponUseCommand(userCoupon2.getId(), 1000)  // 이미 사용됨
+                );
+
+                // when
+                assertThatThrownBy(() -> couponService.use(commands))
+                        .isInstanceOf(BusinessException.class)
+                        .hasMessageContaining(ErrorCode.ALREADY_USED.getMessage());
+
+                // then
+                UserCouponState state1 = userCouponStateRepository.findOneByUserCouponId(userCoupon1.getId()).orElseThrow();
+                UserCouponState state2 = userCouponStateRepository.findOneByUserCouponId(userCoupon2.getId()).orElseThrow();
+
+                assertThat(state1.getUserCouponStatus()).isEqualTo(UserCouponStatus.ISSUED);
+                assertThat(state2.getUserCouponStatus()).isEqualTo(UserCouponStatus.USED);
+            }
         }
     }
 }
