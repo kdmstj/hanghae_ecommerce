@@ -11,6 +11,7 @@ import kr.hhplus.be.server.order.domain.entity.OrderProduct;
 import kr.hhplus.be.server.order.domain.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -23,6 +24,7 @@ public class OrderService {
     private final OrderPaymentService orderPaymentService;
     private final OrderCouponService orderCouponService;
 
+    @Transactional
     public OrderAggregate create(
             long userId,
             List<OrderProductCommand> productCommands,
