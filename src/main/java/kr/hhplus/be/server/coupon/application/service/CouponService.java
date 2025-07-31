@@ -17,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -31,7 +30,7 @@ public class CouponService {
 
     public List<UserCouponResult> getValidCoupons(long userId) {
 
-        return userCouponRepository.findAllByUserIdAndUsedAtIsNullAndExpiredAtAfter(userId, LocalDateTime.now())
+        return userCouponRepository.findAllValidByUserId(userId)
                 .stream()
                 .map(UserCouponResult::from)
                 .toList();
