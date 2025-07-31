@@ -7,6 +7,7 @@ import kr.hhplus.be.server.coupon.application.result.UserCouponResult;
 import kr.hhplus.be.server.coupon.domain.UserCouponStatus;
 import kr.hhplus.be.server.coupon.domain.entity.Coupon;
 import kr.hhplus.be.server.coupon.domain.entity.UserCoupon;
+import kr.hhplus.be.server.coupon.domain.entity.UserCouponState;
 import kr.hhplus.be.server.coupon.domain.repository.CouponQuantityRepository;
 import kr.hhplus.be.server.coupon.domain.repository.CouponRepository;
 import kr.hhplus.be.server.coupon.domain.repository.UserCouponRepository;
@@ -15,6 +16,7 @@ import kr.hhplus.be.server.coupon.fixture.CouponFixture;
 import kr.hhplus.be.server.coupon.fixture.CouponQuantityFixture;
 import kr.hhplus.be.server.coupon.fixture.UserCouponFixture;
 import kr.hhplus.be.server.coupon.fixture.UserCouponStateFixture;
+import kr.hhplus.be.server.order.application.command.CouponUseCommand;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -186,6 +188,74 @@ public class CouponServiceIntegrationTest {
                 assertThat(userCouponRepository.existsByUserIdAndCouponId(userId, coupon.getId())).isFalse();
                 assertThat(couponQuantityRepository.findOneByCouponId(coupon.getId()).getIssuedQuantity()).isEqualTo(issuedQuantity);
 
+            }
+        }
+
+        @Nested
+        @DisplayName("쿠폰 사용")
+        class UseUserCoupon {
+
+            @Test
+            @DisplayName("성공 - 보유 중인 쿠폰을 사용 상태로 변경")
+            void 쿠폰_사용_성공() {
+                // given
+                Coupon coupon = couponRepository.save(CouponFixture.validPeriod());
+                UserCoupon userCoupon = userCouponRepository.save(UserCouponFixture.withUserIdAndCouponId(1L, coupon.getId()));
+                userCouponStateRepository.save(UserCouponStateFixture.withUserCouponIdAndWithUserCouponStatus(userCoupon.getId(), UserCouponStatus.ISSUED));
+
+                CouponUseCommand command = new CouponUseCommand(userCoupon.getId(), 1000);
+                List<CouponUseCommand> commands = List.of(command);
+
+                // when
+                couponService.use(commands);
+
+                // then
+                UserCouponState updated = userCouponStateRepository.findOneByUserCouponId(userCoupon.getId()).orElseThrow();
+                assertThat(updated.getUserCouponStatus()).isEqualTo(UserCouponStatus.USED);
+            }
+
+            @Test
+            @DisplayName("실패 - 존재하지 않는 userCouponId")
+            void 쿠폰_사용_실패_없는_ID() {
+                // given
+                List<CouponUseCommand> commands = List.of(new CouponUseCommand(999L, 1000));
+
+                // when & then
+                assertThatThrownBy(() -> couponService.use(commands))
+                        .isInstanceOf(BusinessException.class)
+                        .hasMessageContaining(ErrorCode.USER_COUPON_NOT_FOUND.getMessage());
+            }
+
+            @Test
+            @DisplayName("실패 - 이미 사용된 쿠폰은 다시 사용할 수 없다")
+            void 쿠폰_사용_실패_이미_사용됨() {
+                // given
+                Coupon coupon = couponRepository.save(CouponFixture.validPeriod());
+                UserCoupon userCoupon = userCouponRepository.save(UserCouponFixture.withUserIdAndCouponId(1L, coupon.getId()));
+                userCouponStateRepository.save(UserCouponStateFixture.withUserCouponIdAndWithUserCouponStatus(userCoupon.getId(), UserCouponStatus.USED));
+
+                List<CouponUseCommand> commands = List.of(new CouponUseCommand(userCoupon.getId(), 1000));
+
+                // when & then
+                assertThatThrownBy(() -> couponService.use(commands))
+                        .isInstanceOf(BusinessException.class)
+                        .hasMessageContaining(ErrorCode.ALREADY_USED.getMessage());
+            }
+
+            @Test
+            @DisplayName("실패 - 만료된 쿠폰은 사용할 수 없다")
+            void 쿠폰_사용_실패_만료됨() {
+                // given
+                Coupon coupon = couponRepository.save(CouponFixture.validPeriod());
+                UserCoupon userCoupon = userCouponRepository.save(UserCouponFixture.withUserIdAndCouponId(1L, coupon.getId()));
+                userCouponStateRepository.save(UserCouponStateFixture.withUserCouponIdAndWithUserCouponStatus(userCoupon.getId(), UserCouponStatus.EXPIRED));
+
+                List<CouponUseCommand> commands = List.of(new CouponUseCommand(userCoupon.getId(), 1000));
+
+                // when & then
+                assertThatThrownBy(() -> couponService.use(commands))
+                        .isInstanceOf(BusinessException.class)
+                        .hasMessageContaining(ErrorCode.ALREADY_EXPIRED.getMessage());
             }
         }
     }
