@@ -34,3 +34,19 @@ CREATE TABLE user_coupon_state (
     updated_at DATETIME
 );
 
+CREATE TABLE user_point (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    balance INT,
+    updated_at DATETIME
+);
+
+CREATE TABLE point_history (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_point_id BIGINT NOT NULL,
+    order_id BIGINT,
+    amount INT,
+    transaction_type VARCHAR(20),
+    created_at DATETIME
+);
+
