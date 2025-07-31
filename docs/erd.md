@@ -1,5 +1,5 @@
 ```mermaid
-----
+---
 config:
   theme: redux
   layout: elk
@@ -117,11 +117,12 @@ erDiagram
         DATETIME updated_at "수정일"
     }
     
-    BEST_PRODUCT{
-        BIGINT product_id "상품 식별자"
-        VARHCAR(255) productName "상품 이름"
-        INT total_sold_quantity "누적 판매량"
-        INT total_sold_amount "누적 판매금"
-        DATETIME created_at "생성일"
-    }
+    PRODUCT ||--o{ PRODUCT_DAILY_SALES : record
+    PRODUCT_DAILY_SALES{
+	    BIGINT id PK
+	    BIGINT product_id
+	    DATE sales_date
+	    INT sales_count
+	    DATETIME created_at
+	  }
 ```
