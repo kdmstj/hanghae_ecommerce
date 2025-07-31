@@ -4,6 +4,7 @@ import kr.hhplus.be.server.DataBaseCleanUp;
 import kr.hhplus.be.server.common.BusinessException;
 import kr.hhplus.be.server.common.ErrorCode;
 import kr.hhplus.be.server.point.application.command.PointChargeCommand;
+import kr.hhplus.be.server.point.application.command.PointUseCommand;
 import kr.hhplus.be.server.point.domain.TransactionType;
 import kr.hhplus.be.server.point.domain.entity.UserPoint;
 import kr.hhplus.be.server.point.domain.repository.PointHistoryRepository;
@@ -101,6 +102,74 @@ public class PointServiceIntegrationTest {
             assertThatThrownBy(() -> pointService.charge(command))
                     .isInstanceOf(BusinessException.class)
                     .hasMessage(ErrorCode.EXCEED_MAX_BALANCE.getMessage());
+        }
+    }
+
+
+    @Nested
+    @DisplayName("포인트 차감")
+    class UsePoint {
+
+        @Test
+        @DisplayName("포인트 차감 시 유저의 포인트가 차감되고 이력이 기록된다")
+        void 포인트_차감_성공() {
+            //given
+            long userId = 1L;
+            int originAmount = 20_000;
+            int useAmount = 10_000;
+
+            UserPoint userPoint = userPointRepository.save(UserPointFixture.withUserIdAndBalance(userId, originAmount));
+            PointUseCommand command = new PointUseCommand(userId, useAmount);
+
+            //when
+            long orderId = 1L;
+            pointService.use(orderId, command);
+
+            //then
+            assertThat(userPointRepository.findOneByUserId(userId).get().getBalance())
+                    .isEqualTo(originAmount - useAmount);
+
+            assertThat(pointHistoryRepository.findAll())
+                    .hasSize(1)
+                    .allSatisfy(history -> {
+                        assertThat(history.getUserPointId()).isEqualTo(userPoint.getUserId());
+                        assertThat(history.getAmount()).isEqualTo(-useAmount);
+                        assertThat(history.getTransactionType()).isEqualTo(TransactionType.USE);
+                    });
+        }
+
+        @Test
+        @DisplayName("실패 - 존재하지 않는 포인트 정보")
+        void 포인트_충전_실패_존재하지_않는_포인트_정보() {
+            // given
+            PointUseCommand command = new PointUseCommand(999L, 10_000);
+
+            // when & then
+            assertThatThrownBy(() -> pointService.use(1L, command))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessage(ErrorCode.USER_POINT_NOT_FOUND.getMessage());
+        }
+
+
+        @Test
+        @DisplayName("실패 - 보유 잔액 부족")
+        void 포인트_충전_실패_보유_잔액_부족() {
+            // given
+            long userId = 1L;
+            int originAmount = 0;
+            int useAmount = 10_000;
+
+            userPointRepository.save(UserPointFixture.withUserIdAndBalance(userId, originAmount));
+            PointUseCommand command = new PointUseCommand(userId, useAmount);
+
+            // when & then
+            long orderId = 1L;
+            assertThatThrownBy(() -> pointService.use(orderId, command))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessage(ErrorCode.INSUFFICIENT_BALANCE.getMessage());
+
+            assertThat(pointHistoryRepository.findAll()).hasSize(0);
+
         }
     }
 }
