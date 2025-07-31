@@ -7,7 +7,7 @@ import java.util.List;
 public record BestProductResponse(
         long productId,
         String productName,
-        int totalSalesQuantity
+        long totalSalesQuantity
 ) {
     public static BestProductResponse from(BestProductResult result){
         return new BestProductResponse(
