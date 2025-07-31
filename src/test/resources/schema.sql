@@ -14,7 +14,7 @@ CREATE TABLE coupon_quantity (
     total_quantity INT,
     issued_quantity INT,
     created_at DATETIME,
-    updated_at 스
+    updated_at DATETIME
 );
 
 CREATE TABLE user_coupon (
