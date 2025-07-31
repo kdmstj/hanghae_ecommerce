@@ -82,4 +82,37 @@ public class UserCouponRepositoryTest {
             assertThat(result).isEmpty();
         }
     }
+
+    @Nested
+    @DisplayName("existsByUserIdAndCouponId")
+    class ExistsByUserIdAndCouponIdTest {
+
+        @Test
+        @DisplayName("userId와 couponId로 존재 여부를 확인할 수 있다")
+        void 성공() {
+            // given
+            long userId = 1L;
+            long couponId = 100L;
+
+            userCouponRepository.save(UserCouponFixture.withUserIdAndCouponId(userId, couponId));
+
+            // when & then
+            assertThat(userCouponRepository.existsByUserIdAndCouponId(userId, couponId)).isTrue();
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 couponId 혹은 userId 조합은 false를 반환한다")
+        void 실패_존재하지않음() {
+            // given
+            long userId = 1L;
+            long couponId = 100L;
+
+            userCouponRepository.save(UserCouponFixture.withUserIdAndCouponId(userId, couponId));
+
+            // when & then
+            assertThat(userCouponRepository.existsByUserIdAndCouponId(userId, 999L)).isFalse(); // 잘못된 couponId
+            assertThat(userCouponRepository.existsByUserIdAndCouponId(2L, couponId)).isFalse(); // 잘못된 userId
+            assertThat(userCouponRepository.existsByUserIdAndCouponId(2L, 999L)).isFalse();     // 둘 다 틀림
+        }
+    }
 }
