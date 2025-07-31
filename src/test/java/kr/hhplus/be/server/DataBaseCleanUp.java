@@ -20,7 +20,7 @@ public class DataBaseCleanUp {
         List<String> tableNames = listOf(
                 "coupon", "coupon_quantity", "user_coupon", "user_coupon_state"
                 , "user_point", "point_history"
-                , "product"
+                , "product", "product_daily_sales"
                 , "orders", "order_coupon", "order_payment", "order_product"
         );
 

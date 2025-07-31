@@ -4,9 +4,13 @@ import kr.hhplus.be.server.DataBaseCleanUp;
 import kr.hhplus.be.server.common.BusinessException;
 import kr.hhplus.be.server.common.ErrorCode;
 import kr.hhplus.be.server.order.application.command.OrderProductCommand;
+import kr.hhplus.be.server.product.application.result.BestProductResult;
 import kr.hhplus.be.server.product.domain.entity.Product;
+import kr.hhplus.be.server.product.domain.entity.ProductDailySales;
+import kr.hhplus.be.server.product.domain.repository.ProductDailySalesRepository;
 import kr.hhplus.be.server.product.domain.repository.ProductRepository;
 import kr.hhplus.be.server.product.fixture.ProductFixture;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -16,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,7 +36,15 @@ public class ProductServiceIntegrationTest {
     private ProductRepository productRepository;
 
     @Autowired
+    private ProductDailySalesRepository productDailySalesRepository;
+
+    @Autowired
     private DataBaseCleanUp dataBaseCleanUp;
+
+    @BeforeEach
+    void setUp(){
+        dataBaseCleanUp.execute();
+    }
 
     @Nested
     @DisplayName("재고 차감")
@@ -119,6 +132,43 @@ public class ProductServiceIntegrationTest {
 
             assertThat(updated1.getQuantity()).isEqualTo(product1.getQuantity());
             assertThat(updated2.getQuantity()).isEqualTo(product2.getQuantity());
+        }
+    }
+
+
+    @Nested
+    @DisplayName("3일간 상위 상품 5개 조회")
+    class GetBestProductList {
+
+        @Test
+        @DisplayName("완료")
+        void 상위_상품_5개_조회() {
+            for (int i = 1; i <= 6; i++) {
+                Product product = productRepository.save(
+                        ProductFixture.withProductNameAndPricePerUnitAndQuantity("상품" + i, 1000 * i, 100)
+                );
+
+                for (int d = 0; d < 3; d++) {
+                    LocalDate date = LocalDate.now().minusDays(d);
+                    int salesQuantity = 10 * i;
+
+                    productDailySalesRepository.save(
+                            ProductDailySales.builder()
+                                    .productId(product.getId())
+                                    .salesDate(date)
+                                    .quantity(salesQuantity)
+                                    .build()
+                    );
+                }
+            }
+
+            // when
+            List<BestProductResult> bestProducts = productService.getBest();
+
+            // then
+            assertThat(bestProducts).hasSize(5);
+            assertThat(bestProducts.get(0).productName()).isEqualTo("상품6");
+            assertThat(bestProducts.get(4).productName()).isEqualTo("상품2");
         }
     }
 }
