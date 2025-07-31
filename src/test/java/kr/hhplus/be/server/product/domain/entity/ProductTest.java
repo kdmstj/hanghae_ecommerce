@@ -1,8 +1,7 @@
-package kr.hhplus.be.server.product;
+package kr.hhplus.be.server.product.domain.entity;
 
 import kr.hhplus.be.server.common.BusinessException;
 import kr.hhplus.be.server.common.ErrorCode;
-import kr.hhplus.be.server.product.domain.entity.Product;
 import kr.hhplus.be.server.product.fixture.ProductFixture;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

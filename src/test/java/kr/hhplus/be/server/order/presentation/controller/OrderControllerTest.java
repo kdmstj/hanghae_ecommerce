@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.order;
+package kr.hhplus.be.server.order.presentation.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.hhplus.be.server.order.application.facade.OrderFacade;
@@ -8,7 +8,6 @@ import kr.hhplus.be.server.order.application.result.OrderResult;
 import kr.hhplus.be.server.order.domain.entity.Order;
 import kr.hhplus.be.server.order.domain.entity.OrderPayment;
 import kr.hhplus.be.server.order.domain.entity.OrderProduct;
-import kr.hhplus.be.server.order.presentation.controller.OrderController;
 import kr.hhplus.be.server.order.presentation.dto.request.OrderCouponRequest;
 import kr.hhplus.be.server.order.presentation.dto.request.OrderPaymentRequest;
 import kr.hhplus.be.server.order.presentation.dto.request.OrderProductRequest;

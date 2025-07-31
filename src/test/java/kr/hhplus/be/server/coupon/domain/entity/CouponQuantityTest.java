@@ -1,8 +1,7 @@
-package kr.hhplus.be.server.coupon;
+package kr.hhplus.be.server.coupon.domain.entity;
 
 import kr.hhplus.be.server.common.BusinessException;
 import kr.hhplus.be.server.common.ErrorCode;
-import kr.hhplus.be.server.coupon.domain.entity.CouponQuantity;
 import kr.hhplus.be.server.coupon.fixture.CouponQuantityFixture;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

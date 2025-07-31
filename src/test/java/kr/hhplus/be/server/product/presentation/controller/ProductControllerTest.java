@@ -1,9 +1,8 @@
-package kr.hhplus.be.server.product;
+package kr.hhplus.be.server.product.presentation.controller;
 
 import kr.hhplus.be.server.common.BusinessException;
 import kr.hhplus.be.server.common.ErrorCode;
 import kr.hhplus.be.server.product.application.result.ProductResult;
-import kr.hhplus.be.server.product.presentation.controller.ProductController;
 import kr.hhplus.be.server.product.application.service.ProductService;
 import kr.hhplus.be.server.product.domain.entity.Product;
 import kr.hhplus.be.server.product.fixture.ProductFixture;

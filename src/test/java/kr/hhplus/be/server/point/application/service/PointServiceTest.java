@@ -1,8 +1,7 @@
-package kr.hhplus.be.server.point;
+package kr.hhplus.be.server.point.application.service;
 
 import kr.hhplus.be.server.point.application.command.PointChargeCommand;
 import kr.hhplus.be.server.point.application.command.PointUseCommand;
-import kr.hhplus.be.server.point.application.service.PointService;
 import kr.hhplus.be.server.point.domain.entity.PointHistory;
 import kr.hhplus.be.server.point.domain.entity.UserPoint;
 import kr.hhplus.be.server.point.domain.repository.PointHistoryRepository;
