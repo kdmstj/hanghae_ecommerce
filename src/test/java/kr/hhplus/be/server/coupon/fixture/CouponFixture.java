@@ -7,9 +7,8 @@ import java.time.LocalDateTime;
 
 public class CouponFixture {
 
-    public static Coupon withIssuedQuantityAndIssuedStartedAtAndIssuedEndedAt(int issuedQuantity, LocalDateTime issuedStartedAt, LocalDateTime issuedEndedAt) {
+    public static Coupon withIssuedStartedAtAndIssuedEndedAt(LocalDateTime issuedStartedAt, LocalDateTime issuedEndedAt) {
         return Coupon.builder()
-                .id(1L)
                 .name("coupon")
                 .discountType(DiscountType.FIXED)
                 .discountValue(10000)

@@ -9,7 +9,6 @@ import java.util.List;
 public class UserCouponFixture {
     public static UserCoupon withUserIdAndCouponId(long userId, long couponId) {
         return UserCoupon.builder()
-                .id(1L)
                 .userId(userId)
                 .couponId(couponId)
                 .issuedAt(LocalDateTime.now())
