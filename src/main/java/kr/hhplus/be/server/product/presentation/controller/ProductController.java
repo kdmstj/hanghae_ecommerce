@@ -12,8 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-import static org.hibernate.internal.util.collections.CollectionHelper.listOf;
-
 @RestController
 @RequestMapping("/api/v1/products")
 @RequiredArgsConstructor
@@ -42,11 +40,8 @@ public class ProductController {
     @GetMapping("/best")
     public ResponseEntity<List<BestProductResponse>> getBestProduct(){
 
-        List<BestProductResponse> list = listOf(
-                new BestProductResponse(1L, "productName1", 10000, 10),
-                new BestProductResponse(2L, "productName2", 10000, 20)
-        );
+        List<BestProductResponse> response = BestProductResponse.from(productService.getBest());
 
-        return ResponseEntity.ok().body(list);
+        return ResponseEntity.ok().body(response);
     }
 }
