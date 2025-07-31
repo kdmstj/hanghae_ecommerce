@@ -22,7 +22,10 @@ public class DataBaseCleanUp {
     public void execute() {
         tableNames = listOf(
                 "coupon", "coupon_quantity", "user_coupon", "user_coupon_state"
-                , "user_point", "point_history");
+                , "user_point", "point_history"
+                , "product"
+        );
+
         for (String tableName : tableNames) {
             entityManager.createNativeQuery("TRUNCATE TABLE " + tableName).executeUpdate();
         }

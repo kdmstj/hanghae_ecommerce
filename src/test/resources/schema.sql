@@ -50,3 +50,12 @@ CREATE TABLE point_history (
     created_at DATETIME
 );
 
+CREATE TABLE product (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    product_name VARCHAR(255),
+    price_per_unit INT,
+    quantity INT,
+    created_at DATETIME,
+    updated_at DATETIME
+);
+
