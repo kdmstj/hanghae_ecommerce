@@ -1,8 +1,7 @@
-package kr.hhplus.be.server.coupon;
+package kr.hhplus.be.server.coupon.domain.entity;
 
 import kr.hhplus.be.server.common.BusinessException;
 import kr.hhplus.be.server.common.ErrorCode;
-import kr.hhplus.be.server.coupon.domain.entity.Coupon;
 import kr.hhplus.be.server.coupon.fixture.CouponFixture;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -12,39 +11,13 @@ import org.junit.jupiter.params.provider.*;
 import java.time.LocalDateTime;
 import java.util.stream.Stream;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 public class CouponTest {
 
     @Nested
-    @DisplayName("쿠폰 발급")
+    @DisplayName("쿠폰 발급 유효성 체크")
     class IssueCoupon {
-
-        @ParameterizedTest(name = "성공 - total: {0}, issued: {1}")
-        @CsvSource({
-                "100, 99",
-                "100, 98"
-        })
-        @DisplayName("성공 - 수량 조건 만족 시 발급 성공")
-        void 쿠폰_발급_성공(int totalQuantity, int issuedQuantity) {
-            Coupon coupon = CouponFixture.withTotalQuantityAndIssuedQuantity(totalQuantity, issuedQuantity);
-            coupon.increaseIssuedQuantity();
-            assertThat(coupon.getIssuedQuantity()).isEqualTo(issuedQuantity + 1);
-        }
-
-        @ParameterizedTest(name = "실패 - 수량 초과 total: {0}, issued: {1}")
-        @CsvSource({
-                "100, 100",
-                "10, 10"
-        })
-        @DisplayName("실패 - 수량 초과 시 예외 발생")
-        void 쿠폰_발급_실패_수량_초과(int totalQuantity, int issuedQuantity) {
-            Coupon coupon = CouponFixture.withTotalQuantityAndIssuedQuantity(totalQuantity, issuedQuantity);
-            assertThatThrownBy(coupon::increaseIssuedQuantity)
-                    .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining(ErrorCode.EXCEED_QUANTITY.getMessage());
-        }
 
         static Stream<Arguments> timeBoundarySuccessCases() {
             LocalDateTime now = LocalDateTime.now();
@@ -58,9 +31,12 @@ public class CouponTest {
         @MethodSource("timeBoundarySuccessCases")
         @DisplayName("성공 - 경계 시간 포함 테스트")
         void 쿠폰_발급_성공_시간_경계(String title, LocalDateTime start, LocalDateTime end) {
-            Coupon coupon = CouponFixture.withIssuedQuantityAndIssuedStartedAtAndIssuedEndedAt(0, start, end);
-            coupon.increaseIssuedQuantity();
-            assertThat(coupon.getIssuedQuantity()).isEqualTo(1);
+            // given
+            Coupon coupon = CouponFixture.withIssuedStartedAtAndIssuedEndedAt(start, end);
+
+            // when & then
+            assertThatCode(coupon::validateIssuePeriod)
+                    .doesNotThrowAnyException();
         }
 
         static Stream<Arguments> timeBoundaryFailCases() {
@@ -75,8 +51,11 @@ public class CouponTest {
         @MethodSource("timeBoundaryFailCases")
         @DisplayName("실패 - 시간 조건 위반 테스트")
         void 쿠폰_발급_실패_시간_조건(String title, LocalDateTime start, LocalDateTime end, ErrorCode errorCode) {
-            Coupon coupon = CouponFixture.withIssuedQuantityAndIssuedStartedAtAndIssuedEndedAt(0, start, end);
-            assertThatThrownBy(coupon::increaseIssuedQuantity)
+            // given
+            Coupon coupon = CouponFixture.withIssuedStartedAtAndIssuedEndedAt(start, end);
+
+            // when & then
+            assertThatThrownBy(coupon::validateIssuePeriod)
                     .isInstanceOf(BusinessException.class)
                     .hasMessageContaining(errorCode.getMessage());
         }

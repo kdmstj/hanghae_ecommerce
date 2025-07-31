@@ -1,9 +1,6 @@
 package kr.hhplus.be.server.order.domain.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,6 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
+@Table(name = "orders")
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,13 +21,15 @@ public class Order {
 
     long userId;
 
-    LocalDateTime createdAt = LocalDateTime.now();
+    LocalDateTime createdAt;
 
-    LocalDateTime updatedAt = LocalDateTime.now();
+    LocalDateTime updatedAt;
 
     public static Order create(long userId){
         return Order.builder()
                 .userId(userId)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
     }
 }

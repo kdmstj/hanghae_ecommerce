@@ -27,13 +27,14 @@ public class OrderProduct {
 
     int quantity;
 
-    LocalDateTime createdAt = LocalDateTime.now();
+    LocalDateTime createdAt;
 
     public static OrderProduct create(long orderId, long productId, int quantity){
         return OrderProduct.builder()
                 .orderId(orderId)
                 .productId(productId)
                 .quantity(quantity)
+                .createdAt(LocalDateTime.now())
                 .build();
     }
 }

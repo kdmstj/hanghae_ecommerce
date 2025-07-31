@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.coupon;
+package kr.hhplus.be.server.coupon.presentation.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.hhplus.be.server.common.BusinessException;
@@ -7,7 +7,6 @@ import kr.hhplus.be.server.coupon.application.result.UserCouponResult;
 import kr.hhplus.be.server.coupon.application.service.CouponService;
 import kr.hhplus.be.server.coupon.domain.entity.UserCoupon;
 import kr.hhplus.be.server.coupon.fixture.UserCouponFixture;
-import kr.hhplus.be.server.coupon.presentation.controller.UserCouponController;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

@@ -17,7 +17,6 @@ public class UserPointFixture {
 
     public static UserPoint withUserIdAndBalance(long userId, int balance){
         return UserPoint.builder()
-                .id(1L)
                 .userId(userId)
                 .balance(balance)
                 .updatedAt(LocalDateTime.now())

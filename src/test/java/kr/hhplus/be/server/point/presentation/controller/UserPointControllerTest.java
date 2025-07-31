@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.point;
+package kr.hhplus.be.server.point.presentation.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.hhplus.be.server.common.BusinessException;
@@ -7,7 +7,6 @@ import kr.hhplus.be.server.point.application.result.UserPointResult;
 import kr.hhplus.be.server.point.application.service.PointService;
 import kr.hhplus.be.server.point.domain.entity.UserPoint;
 import kr.hhplus.be.server.point.fixture.UserPointFixture;
-import kr.hhplus.be.server.point.presentation.controller.UserPointController;
 import kr.hhplus.be.server.point.presentation.dto.UserPointRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

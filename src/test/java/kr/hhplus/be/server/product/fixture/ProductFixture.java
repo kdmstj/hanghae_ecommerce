@@ -15,6 +15,14 @@ public class ProductFixture {
         return list;
     }
 
+    public static Product withProductNameAndPricePerUnitAndQuantity(String productName, int pricePerUnit, int quantity){
+        return Product.builder()
+                .productName(productName)
+                .pricePerUnit(pricePerUnit)
+                .quantity(quantity)
+                .build();
+    }
+
     public static Product withId(long id){
         return Product.builder()
                 .id(id)
