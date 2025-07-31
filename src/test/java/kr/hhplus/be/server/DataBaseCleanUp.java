@@ -20,7 +20,9 @@ public class DataBaseCleanUp {
 
     @Transactional
     public void execute() {
-        tableNames = listOf("coupon", "coupon_quantity", "user_coupon", "user_coupon_state");
+        tableNames = listOf(
+                "coupon", "coupon_quantity", "user_coupon", "user_coupon_state"
+                , "user_point", "point_history");
         for (String tableName : tableNames) {
             entityManager.createNativeQuery("TRUNCATE TABLE " + tableName).executeUpdate();
         }
