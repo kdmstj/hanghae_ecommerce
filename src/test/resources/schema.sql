@@ -90,3 +90,10 @@ CREATE TABLE order_product (
     quantity INT,
     created_at DATETIME
 );
+
+CREATE TABLE product_daily_sales (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    product_id BIGINT NOT NULL,
+    sales_date DATE NOT NULL,
+    quantity INT NOT NULL
+);
