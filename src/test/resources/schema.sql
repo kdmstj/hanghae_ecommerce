@@ -59,3 +59,34 @@ CREATE TABLE product (
     updated_at DATETIME
 );
 
+CREATE TABLE orders (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    created_at DATETIME,
+    updated_at DATETIME
+);
+
+CREATE TABLE order_coupon (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    order_id BIGINT NOT NULL,
+    user_coupon_id BIGINT NOT NULL,
+    discount_amount INT,
+    created_at DATETIME
+);
+
+CREATE TABLE order_payment (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    order_id BIGINT NOT NULL,
+    order_amount INT,
+    discount_amount INT,
+    payment_amount INT,
+    created_at DATETIME
+);
+
+CREATE TABLE order_product (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    order_id BIGINT NOT NULL,
+    product_id BIGINT NOT NULL,
+    quantity INT,
+    created_at DATETIME
+);

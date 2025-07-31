@@ -15,15 +15,13 @@ public class DataBaseCleanUp {
     @PersistenceContext
     private EntityManager entityManager;
 
-    private List<String> tableNames;
-
-
     @Transactional
     public void execute() {
-        tableNames = listOf(
+        List<String> tableNames = listOf(
                 "coupon", "coupon_quantity", "user_coupon", "user_coupon_state"
                 , "user_point", "point_history"
                 , "product"
+                , "orders", "order_coupon", "order_payment", "order_product"
         );
 
         for (String tableName : tableNames) {
