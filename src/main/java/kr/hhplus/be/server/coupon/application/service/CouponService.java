@@ -54,14 +54,14 @@ public class CouponService {
         return UserCouponResult.from(userCouponRepository.save(issuedCoupon));
     }
 
+    @Transactional
     public void use(List<CouponUseCommand> commands) {
-
         for (CouponUseCommand command : commands) {
-            UserCouponState userCouponState = userCouponStateRepository.finaOneByUserCouponId(command.userCouponId());
+            UserCouponState userCouponState = userCouponStateRepository.findOneByUserCouponId(command.userCouponId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.USER_COUPON_NOT_FOUND));
 
             userCouponState.update(UserCouponStatus.USED);
         }
-
     }
 
     private Coupon getCoupon(long id) {
