@@ -3,14 +3,16 @@ package kr.hhplus.be.server.product.application.service;
 import kr.hhplus.be.server.common.BusinessException;
 import kr.hhplus.be.server.common.ErrorCode;
 import kr.hhplus.be.server.order.application.command.OrderProductCommand;
+import kr.hhplus.be.server.product.application.result.BestProductResult;
 import kr.hhplus.be.server.product.application.result.ProductResult;
 import kr.hhplus.be.server.product.domain.entity.Product;
+import kr.hhplus.be.server.product.domain.repository.ProductDailySalesRepository;
 import kr.hhplus.be.server.product.domain.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -18,6 +20,7 @@ import java.util.List;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final ProductDailySalesRepository productDailySalesRepository;
 
     public List<ProductResult> get() {
 
@@ -44,6 +47,16 @@ public class ProductService {
             Product product = find(command.productId());
             product.decreaseQuantity(command.quantity());
         }
+    }
+
+    public List<BestProductResult> getBest() {
+        return productDailySalesRepository.findTop5BestProducts(LocalDate.now().minusDays(3))
+                .stream()
+                .map(projection -> new BestProductResult(
+                        projection.getProductId(),
+                        projection.getProductName(),
+                        projection.getTotalSalesQuantity()))
+                .toList();
     }
 
 }

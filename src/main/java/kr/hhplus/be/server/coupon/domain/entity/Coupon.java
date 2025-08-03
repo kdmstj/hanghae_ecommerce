@@ -25,33 +25,13 @@ public class Coupon {
 
     private int discountValue;
 
-    private int totalQuantity;
-
-    private int issuedQuantity;
-
     private LocalDateTime issuedStartedAt;
 
     private LocalDateTime issuedEndedAt;
 
     private LocalDateTime createdAt;
 
-    private LocalDateTime updatedAt;
-
-    public void increaseIssuedQuantity() {
-        validateIssuePeriod();
-        validateQuantity();
-
-        this.issuedQuantity += 1;
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    private void validateQuantity() {
-        if (issuedQuantity >= totalQuantity) {
-            throw new BusinessException(ErrorCode.EXCEED_QUANTITY);
-        }
-    }
-
-    private void validateIssuePeriod() {
+    public void validateIssuePeriod() {
         LocalDateTime now = LocalDateTime.now();
         if (now.isBefore(issuedStartedAt)) {
             throw new BusinessException(ErrorCode.ISSUE_PERIOD_NOT_STARTED);

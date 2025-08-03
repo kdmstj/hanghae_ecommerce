@@ -1,9 +1,9 @@
-package kr.hhplus.be.server.product;
+package kr.hhplus.be.server.product.presentation.controller;
 
 import kr.hhplus.be.server.common.BusinessException;
 import kr.hhplus.be.server.common.ErrorCode;
+import kr.hhplus.be.server.product.application.result.BestProductResult;
 import kr.hhplus.be.server.product.application.result.ProductResult;
-import kr.hhplus.be.server.product.presentation.controller.ProductController;
 import kr.hhplus.be.server.product.application.service.ProductService;
 import kr.hhplus.be.server.product.domain.entity.Product;
 import kr.hhplus.be.server.product.fixture.ProductFixture;
@@ -19,6 +19,8 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.util.List;
 
+import static org.hamcrest.Matchers.hasSize;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -91,6 +93,29 @@ public class ProductControllerTest {
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.message").value(ErrorCode.PRODUCT_NOT_FOUND.getMessage()));
+        }
+    }
+
+    @Nested
+    @DisplayName("상위 제품 목록 조회")
+    class GetBestProductList {
+
+        @Test
+        @DisplayName("성공")
+        void 상위_제품_목록_조회_성공() throws Exception {
+            // given
+            List<BestProductResult> bestProducts = List.of(
+                    new BestProductResult(1L, "베스트상품1", 10),
+                    new BestProductResult(2L, "베스트상품2", 20)
+            );
+            when(productService.getBest()).thenReturn(bestProducts);
+
+            // when & then
+            mockMvc.perform(MockMvcRequestBuilders.get(BASE_URI + "/best")
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$[0].productName").value("베스트상품1"))
+                    .andExpect(jsonPath("$[1].totalSalesQuantity").value(20));
         }
     }
 }

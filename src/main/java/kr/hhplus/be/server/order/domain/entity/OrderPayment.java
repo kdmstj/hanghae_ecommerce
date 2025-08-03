@@ -26,9 +26,7 @@ public class OrderPayment {
 
     int paymentAmount;
 
-    LocalDateTime createdAt = LocalDateTime.now();
-
-    LocalDateTime updatedAt = LocalDateTime.now();
+    LocalDateTime createdAt;
 
     public static OrderPayment create(long orderId, int orderAmount, int discountAmount, int paymentAmount){
         return OrderPayment.builder()
@@ -36,6 +34,7 @@ public class OrderPayment {
                 .orderAmount(orderAmount)
                 .discountAmount(discountAmount)
                 .paymentAmount(paymentAmount)
+                .createdAt(LocalDateTime.now())
                 .build();
     }
 }
