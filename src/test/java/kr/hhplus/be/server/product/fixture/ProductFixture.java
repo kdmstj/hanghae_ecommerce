@@ -2,6 +2,7 @@ package kr.hhplus.be.server.product.fixture;
 
 import kr.hhplus.be.server.product.domain.entity.Product;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +21,8 @@ public class ProductFixture {
                 .productName(productName)
                 .pricePerUnit(pricePerUnit)
                 .quantity(quantity)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
     }
 
