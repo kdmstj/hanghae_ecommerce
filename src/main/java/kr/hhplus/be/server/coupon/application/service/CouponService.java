@@ -44,7 +44,7 @@ public class CouponService {
         }
 
         Coupon coupon = getCoupon(couponId);
-        CouponQuantity couponQuantity = couponQuantityRepository.findOneByCouponId(couponId);
+        CouponQuantity couponQuantity = couponQuantityRepository.findWithPessimisticLock(couponId);
 
         coupon.validateIssuePeriod();
         couponQuantity.increaseIssuedQuantity();

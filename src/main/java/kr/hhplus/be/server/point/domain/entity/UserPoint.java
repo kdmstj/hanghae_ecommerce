@@ -1,10 +1,7 @@
 package kr.hhplus.be.server.point.domain.entity;
 
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import kr.hhplus.be.server.common.BusinessException;
 import kr.hhplus.be.server.common.ErrorCode;
 import lombok.*;
@@ -29,6 +26,9 @@ public class UserPoint {
     private int balance;
 
     private LocalDateTime updatedAt;
+
+    @Version
+    private Long version;
 
     public void increaseBalance(int chargeAmount) {
         if (balance + chargeAmount > MAX_BALANCE) {

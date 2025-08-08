@@ -38,7 +38,8 @@ CREATE TABLE user_point (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,
     balance INT,
-    updated_at DATETIME
+    updated_at DATETIME,
+    version BIGINT DEFAULT 0
 );
 
 CREATE TABLE point_history (
