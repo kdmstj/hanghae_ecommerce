@@ -39,6 +39,7 @@ public class Product {
             throw new BusinessException(ErrorCode.INSUFFICIENT_QUANTITY);
         }
 
+        this.updatedAt = LocalDateTime.now();
         this.quantity -= requestQuantity;
     }
 }

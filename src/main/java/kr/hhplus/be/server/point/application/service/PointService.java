@@ -11,6 +11,8 @@ import kr.hhplus.be.server.point.domain.entity.UserPoint;
 import kr.hhplus.be.server.point.domain.repository.PointHistoryRepository;
 import kr.hhplus.be.server.point.domain.repository.UserPointRepository;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -27,17 +29,22 @@ public class PointService {
 
     @Transactional
     public UserPointResult charge(PointChargeCommand command) {
-        UserPoint userPoint = find(command.userId());
+        try {
+            UserPoint userPoint = findWithOptimisticLock(command.userId());
 
-        userPoint.increaseBalance(command.amount());
-        pointHistoryRepository.save(PointHistory.createChargeHistory(userPoint.getId(), command.amount()));
+            userPoint.increaseBalance(command.amount());
+            pointHistoryRepository.save(PointHistory.createChargeHistory(userPoint.getId(), command.amount()));
 
-        return UserPointResult.from(userPoint);
+            UserPoint result = userPointRepository.saveAndFlush(userPoint);
+            return UserPointResult.from(result);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            throw new BusinessException(ErrorCode.CONFLICT_CHARGE);
+        }
     }
 
     @Transactional
     public UserPointResult use(Long orderId, PointUseCommand command){
-        UserPoint userPoint = find(command.userId());
+        UserPoint userPoint = findWithPessimisticLock(command.userId());
 
         userPoint.decreaseBalance(command.amount());
         pointHistoryRepository.save(PointHistory.createUseHistory(orderId, userPoint.getId(), command.amount()));
@@ -47,6 +54,16 @@ public class PointService {
 
     private UserPoint find(long userId){
         return userPointRepository.findOneByUserId(userId).orElseThrow(() ->
+                new BusinessException(ErrorCode.USER_POINT_NOT_FOUND));
+    }
+
+    private UserPoint findWithOptimisticLock(long userId){
+        return userPointRepository.findWithOptimisticLock(userId).orElseThrow(() ->
+            new BusinessException(ErrorCode.USER_POINT_NOT_FOUND));
+    }
+
+    private UserPoint findWithPessimisticLock(long userId){
+        return userPointRepository.findWithPessimisticLock(userId).orElseThrow(() ->
                 new BusinessException(ErrorCode.USER_POINT_NOT_FOUND));
     }
 }

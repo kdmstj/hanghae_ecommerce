@@ -44,9 +44,14 @@ public class ProductService {
     public void decreaseQuantity(List<OrderProductCommand> commands) {
 
         for (OrderProductCommand command : commands) {
-            Product product = find(command.productId());
+            Product product = findWithPessimisticLock(command.productId());
             product.decreaseQuantity(command.quantity());
         }
+    }
+
+    private Product findWithPessimisticLock(long id){
+        return productRepository.findWithPessimisticLock(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));
     }
 
     public List<BestProductResult> getBest() {
