@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.point.application.service;
 
 import kr.hhplus.be.server.DataBaseCleanUp;
+import kr.hhplus.be.server.common.BusinessException;
 import kr.hhplus.be.server.point.application.command.PointChargeCommand;
 import kr.hhplus.be.server.point.application.command.PointUseCommand;
 import kr.hhplus.be.server.point.domain.entity.UserPoint;
@@ -12,7 +13,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.concurrent.CountDownLatch;
@@ -64,10 +64,9 @@ public class PointConcurrencyTest {
             executorService.submit(() -> {
                 try {
                     pointService.charge(new PointChargeCommand(userId, chargeAmount));
-                } catch (ObjectOptimisticLockingFailureException e) {
+                } catch (BusinessException e) {
                     failCount.incrementAndGet();
-                } finally
-                {
+                } finally {
                     latch.countDown();
                 }
             });
