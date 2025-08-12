@@ -35,7 +35,8 @@ public class PointService {
             userPoint.increaseBalance(command.amount());
             pointHistoryRepository.save(PointHistory.createChargeHistory(userPoint.getId(), command.amount()));
 
-            return UserPointResult.from(userPoint);
+            UserPoint result = userPointRepository.saveAndFlush(userPoint);
+            return UserPointResult.from(result);
         } catch (ObjectOptimisticLockingFailureException e) {
             throw new BusinessException(ErrorCode.CONFLICT_CHARGE);
         }
