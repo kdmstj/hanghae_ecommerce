@@ -1,5 +1,8 @@
 package kr.hhplus.be.server.order.application.facade;
 
+import kr.hhplus.be.server.common.exception.BusinessException;
+import kr.hhplus.be.server.common.exception.ErrorCode;
+import kr.hhplus.be.server.common.lock.DistributedLock;
 import kr.hhplus.be.server.coupon.application.service.CouponService;
 import kr.hhplus.be.server.order.application.command.OrderCreateCommand;
 import kr.hhplus.be.server.order.application.result.OrderAggregate;
@@ -10,7 +13,6 @@ import kr.hhplus.be.server.product.application.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -21,7 +23,13 @@ public class OrderFacade {
     private final CouponService couponService;
     private final PointService pointService;
 
-    @Transactional
+    @DistributedLock(
+            keys = {
+                    "'lock:user:' + #userId",
+                    "#command.products.![ 'locK:product:' + productId ]"
+            },
+            type = DistributedLock.LockType.MULTI
+    )
     public OrderResult place(long userId, OrderCreateCommand command) {
         OrderAggregate orderAggregate = orderService.create(userId, command.products(), command.payment(), command.coupons());
         long orderId = orderAggregate.order().getId();
