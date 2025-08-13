@@ -16,16 +16,19 @@ import java.time.LocalDateTime;
 public class UserCouponState {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    long id;
+    private long id;
 
-    long userCouponId;
+    private long userCouponId;
 
     @Enumerated(value = EnumType.STRING)
-    UserCouponStatus userCouponStatus;
+    private UserCouponStatus userCouponStatus;
 
-    LocalDateTime createdAt;
+    private LocalDateTime createdAt;
 
-    LocalDateTime updatedAt;
+    private LocalDateTime updatedAt;
+
+    @Version
+    private long version;
 
     public void update(UserCouponStatus userCouponStatus){
         if(this.userCouponStatus == UserCouponStatus.USED){

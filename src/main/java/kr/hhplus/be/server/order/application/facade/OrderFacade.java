@@ -8,6 +8,7 @@ import kr.hhplus.be.server.order.application.service.OrderService;
 import kr.hhplus.be.server.point.application.service.PointService;
 import kr.hhplus.be.server.product.application.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,9 +28,13 @@ public class OrderFacade {
 
         productService.decreaseQuantity(command.products());
 
-        couponService.use(command.coupons());
-
         pointService.use(orderId, command.point());
+
+        try {
+            couponService.use(command.coupons());
+        } catch (ObjectOptimisticLockingFailureException e) {
+            throw new BusinessException(ErrorCode.CONFLICT_USE);
+        }
 
         return OrderResult.from(orderAggregate);
     }

@@ -55,12 +55,13 @@ public class CouponService {
     }
 
     @Transactional
-    public void use(List<CouponUseCommand> commands) {
+    public void use(List<CouponUseCommand> commands) throws ObjectOptimisticLockingFailureException {
         for (CouponUseCommand command : commands) {
             UserCouponState userCouponState = userCouponStateRepository.findOneByUserCouponId(command.userCouponId())
                     .orElseThrow(() -> new BusinessException(ErrorCode.USER_COUPON_NOT_FOUND));
 
             userCouponState.update(UserCouponStatus.USED);
+            userCouponStateRepository.saveAndFlush(userCouponState);
         }
     }
 
