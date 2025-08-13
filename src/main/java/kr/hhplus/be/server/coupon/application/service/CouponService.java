@@ -1,7 +1,8 @@
 package kr.hhplus.be.server.coupon.application.service;
 
-import kr.hhplus.be.server.common.BusinessException;
-import kr.hhplus.be.server.common.ErrorCode;
+import kr.hhplus.be.server.common.exception.BusinessException;
+import kr.hhplus.be.server.common.exception.ErrorCode;
+import kr.hhplus.be.server.common.lock.DistributedLock;
 import kr.hhplus.be.server.coupon.application.result.UserCouponResult;
 import kr.hhplus.be.server.coupon.domain.UserCouponStatus;
 import kr.hhplus.be.server.coupon.domain.entity.Coupon;
@@ -14,6 +15,7 @@ import kr.hhplus.be.server.coupon.domain.repository.UserCouponRepository;
 import kr.hhplus.be.server.coupon.domain.repository.UserCouponStateRepository;
 import kr.hhplus.be.server.order.application.command.CouponUseCommand;
 import lombok.RequiredArgsConstructor;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,7 +38,12 @@ public class CouponService {
                 .toList();
     }
 
-    @Transactional
+    @DistributedLock(
+            keys = {
+                    "'lock:coupon:' + #couponId",
+            },
+            type = DistributedLock.LockType.SINGLE
+    )
     public UserCouponResult issue(long userId, long couponId) {
 
         if (userCouponRepository.existsByUserIdAndCouponId(userId, couponId)) {
