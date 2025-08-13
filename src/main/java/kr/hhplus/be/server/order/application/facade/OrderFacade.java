@@ -26,7 +26,7 @@ public class OrderFacade {
     @DistributedLock(
             keys = {
                     "'lock:user:' + #userId",
-                    "#command.products.![ 'locK:product:' + productId ]"
+                    "#command.products.![ 'lock:product:' + productId ]"
             },
             type = DistributedLock.LockType.MULTI
     )
