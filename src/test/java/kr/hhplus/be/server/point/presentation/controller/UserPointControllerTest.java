@@ -1,8 +1,8 @@
 package kr.hhplus.be.server.point.presentation.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import kr.hhplus.be.server.common.BusinessException;
-import kr.hhplus.be.server.common.ErrorCode;
+import kr.hhplus.be.server.common.exception.BusinessException;
+import kr.hhplus.be.server.common.exception.ErrorCode;
 import kr.hhplus.be.server.point.application.result.UserPointResult;
 import kr.hhplus.be.server.point.application.service.PointService;
 import kr.hhplus.be.server.point.domain.entity.UserPoint;

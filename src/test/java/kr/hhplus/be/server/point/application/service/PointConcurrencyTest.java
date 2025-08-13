@@ -1,7 +1,7 @@
 package kr.hhplus.be.server.point.application.service;
 
 import kr.hhplus.be.server.DataBaseCleanUp;
-import kr.hhplus.be.server.common.BusinessException;
+import kr.hhplus.be.server.common.exception.BusinessException;
 import kr.hhplus.be.server.point.application.command.PointChargeCommand;
 import kr.hhplus.be.server.point.application.command.PointUseCommand;
 import kr.hhplus.be.server.point.domain.entity.UserPoint;

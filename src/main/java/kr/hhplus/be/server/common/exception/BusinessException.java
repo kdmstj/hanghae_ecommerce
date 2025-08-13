@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.common;
+package kr.hhplus.be.server.common.exception;
 
 public class BusinessException extends RuntimeException {
     private final ErrorCode errorCode;
