@@ -1,7 +1,7 @@
 package kr.hhplus.be.server.product.presentation.controller;
 
-import kr.hhplus.be.server.common.BusinessException;
-import kr.hhplus.be.server.common.ErrorCode;
+import kr.hhplus.be.server.common.exception.BusinessException;
+import kr.hhplus.be.server.common.exception.ErrorCode;
 import kr.hhplus.be.server.product.application.result.BestProductResult;
 import kr.hhplus.be.server.product.application.result.ProductResult;
 import kr.hhplus.be.server.product.application.service.ProductService;
@@ -19,8 +19,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.util.List;
 
-import static org.hamcrest.Matchers.hasSize;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;

@@ -1,8 +1,8 @@
 package kr.hhplus.be.server.product.application.service;
 
 import kr.hhplus.be.server.DataBaseCleanUp;
-import kr.hhplus.be.server.common.BusinessException;
-import kr.hhplus.be.server.common.ErrorCode;
+import kr.hhplus.be.server.common.exception.BusinessException;
+import kr.hhplus.be.server.common.exception.ErrorCode;
 import kr.hhplus.be.server.product.application.result.ProductResult;
 import kr.hhplus.be.server.product.domain.entity.Product;
 import kr.hhplus.be.server.product.domain.repository.ProductRepository;

@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.common;
+package kr.hhplus.be.server.common.exception;
 
 public enum ErrorCode {
     //point
@@ -19,7 +19,8 @@ public enum ErrorCode {
     ISSUE_PERIOD_ENDED(400, "발급 만료일보다 이후입니다."),
     USER_COUPON_NOT_FOUND(404, "존재하는 쿠폰이 없습니다."),
     ALREADY_EXPIRED(400, "만료된 쿠폰입니다."),
-    ALREADY_USED(400, "사용된 쿠폰입니다.");
+    ALREADY_USED(400, "사용된 쿠폰입니다."),
+    CONFLICT_USE(409, "사용 시 충돌이 발생했습니다.");
 
     private final int status;
     private final String message;

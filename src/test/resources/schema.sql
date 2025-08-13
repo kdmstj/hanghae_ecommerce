@@ -31,7 +31,8 @@ CREATE TABLE user_coupon_state (
     user_coupon_id BIGINT NOT NULL,
     user_coupon_status VARCHAR(20),
     created_at DATETIME,
-    updated_at DATETIME
+    updated_at DATETIME,
+    version BIGINT DEFAULT 0
 );
 
 CREATE TABLE user_point (

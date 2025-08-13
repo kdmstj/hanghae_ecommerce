@@ -1,7 +1,7 @@
 package kr.hhplus.be.server.product.application.service;
 
-import kr.hhplus.be.server.common.BusinessException;
-import kr.hhplus.be.server.common.ErrorCode;
+import kr.hhplus.be.server.common.exception.BusinessException;
+import kr.hhplus.be.server.common.exception.ErrorCode;
 import kr.hhplus.be.server.order.application.command.OrderProductCommand;
 import kr.hhplus.be.server.product.application.result.BestProductResult;
 import kr.hhplus.be.server.product.application.result.ProductResult;
