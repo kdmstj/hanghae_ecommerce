@@ -30,9 +30,12 @@ public class LockKeyGenerator {
             Object value = expression.getValue(context);
 
             if(value instanceof Iterable<?> it){
-                for(Object v : it){
-                    keys.add(Objects.toString(v));
+                List<String> list = new ArrayList<>();
+                for (Object v : it) {
+                    list.add(Objects.toString(v));
                 }
+                list.sort(String::compareTo);
+                keys.addAll(list);
             } else{
                 keys.add(Objects.toString(value));
             }
