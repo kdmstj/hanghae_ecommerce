@@ -1,7 +1,7 @@
 package kr.hhplus.be.server.product.application.service;
 
-import kr.hhplus.be.server.common.BusinessException;
-import kr.hhplus.be.server.common.ErrorCode;
+import kr.hhplus.be.server.common.exception.BusinessException;
+import kr.hhplus.be.server.common.exception.ErrorCode;
 import kr.hhplus.be.server.order.application.command.OrderProductCommand;
 import kr.hhplus.be.server.product.application.result.BestProductResult;
 import kr.hhplus.be.server.product.application.result.ProductResult;
@@ -9,6 +9,7 @@ import kr.hhplus.be.server.product.domain.entity.Product;
 import kr.hhplus.be.server.product.domain.repository.ProductDailySalesRepository;
 import kr.hhplus.be.server.product.domain.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,6 +55,7 @@ public class ProductService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));
     }
 
+    @Cacheable(value = "best-products", key = "'cache:best-products'")
     public List<BestProductResult> getBest() {
         return productDailySalesRepository.findTop5BestProducts(LocalDate.now().minusDays(3))
                 .stream()

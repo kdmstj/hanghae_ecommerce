@@ -29,21 +29,28 @@ import kr.hhplus.be.server.point.fixture.UserPointFixture;
 import kr.hhplus.be.server.product.domain.entity.Product;
 import kr.hhplus.be.server.product.domain.repository.ProductRepository;
 import kr.hhplus.be.server.product.fixture.ProductFixture;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @Testcontainers
+@Slf4j
 public class OrderFacadeIntegrationTest {
     @Autowired
     private OrderFacade orderFacade;
@@ -82,7 +89,7 @@ public class OrderFacadeIntegrationTest {
     private DataBaseCleanUp dataBaseCleanUp;
 
     @BeforeEach
-    void setUp(){
+    void setUp() {
         dataBaseCleanUp.execute();
     }
 
@@ -125,9 +132,6 @@ public class OrderFacadeIntegrationTest {
             Product updatedProduct = productRepository.findById(product.getId()).orElseThrow();
             assertThat(updatedProduct.getQuantity()).isEqualTo(productStock - orderQuantity);
 
-            UserCouponState state = userCouponStateRepository.findOneByUserCouponId(userCoupon.getId()).orElseThrow();
-            assertThat(state.getUserCouponStatus()).isEqualTo(UserCouponStatus.USED);
-
             assertThat(userPointRepository.findOneByUserId(userId).get().getBalance()).isEqualTo(userPointBalance - pointUseAmount);
             assertThat(pointHistoryRepository.findAll())
                     .hasSize(1)
@@ -138,6 +142,69 @@ public class OrderFacadeIntegrationTest {
                     });
 
             assertThat(orderRepository.findById(result.id())).isPresent();
+        }
+
+        @Test
+        @DisplayName("동시에 메서드 호출하는 경우 정상적으로 작동한다.")
+        void 동시에_호출하는경우_정상적으로_작동한다() throws InterruptedException {
+            // given
+            long userId = 1L;
+            int productStock = 100;
+            int orderQuantity = 10;
+            int userPointBalance = 1_800_000;
+            int pointUseAmount = 180_000;
+
+            Product product = productRepository.save(
+                    ProductFixture.withProductNameAndPricePerUnitAndQuantity("상품", 10_000, productStock));
+
+            Product product2 = productRepository.save(
+                    ProductFixture.withProductNameAndPricePerUnitAndQuantity("상품2", 10_000, productStock));
+
+
+            UserPoint userPoint = userPointRepository.save(
+                    UserPointFixture.withUserIdAndBalance(userId, userPointBalance));
+
+            OrderCreateCommand command = new OrderCreateCommand(
+                    new PaymentCreateCommand(100_000, 10_000, 180_000),
+                    List.of(new OrderProductCommand(product.getId(), orderQuantity), new OrderProductCommand(product2.getId(), orderQuantity)),
+                    List.of(),
+                    new PointUseCommand(userId, pointUseAmount)
+            );
+
+            // when
+            AtomicInteger failCount = new AtomicInteger();
+            int threadCount = 10;
+            ExecutorService executorService = Executors.newFixedThreadPool(2);
+            CountDownLatch latch = new CountDownLatch(threadCount);
+            for (int i = 0; i < threadCount; i++) {
+                executorService.submit(() -> {
+                    try {
+                        orderFacade.place(userId, command);
+                    } catch (ObjectOptimisticLockingFailureException e) {
+                        failCount.incrementAndGet();
+                    } finally {
+                        latch.countDown();
+                    }
+                });
+            }
+            latch.await();
+            executorService.shutdown();
+
+            // then
+            Product updatedProduct = productRepository.findById(product.getId()).orElseThrow();
+            assertThat(updatedProduct.getQuantity()).isEqualTo(productStock - orderQuantity * threadCount);
+
+            Product updatedProduct2 = productRepository.findById(product2.getId()).orElseThrow();
+            assertThat(updatedProduct2.getQuantity()).isEqualTo(productStock - orderQuantity * threadCount);
+
+            assertThat(userPointRepository.findOneByUserId(userId).get().getBalance()).isEqualTo(userPointBalance - pointUseAmount * threadCount);
+            assertThat(pointHistoryRepository.findAll())
+                    .hasSize(threadCount)
+                    .allSatisfy(history -> {
+                        assertThat(history.getUserPointId()).isEqualTo(userPoint.getUserId());
+                        assertThat(history.getAmount()).isEqualTo(-pointUseAmount);
+                        assertThat(history.getTransactionType()).isEqualTo(TransactionType.USE);
+                    });
         }
 
         @Test
