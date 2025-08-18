@@ -52,7 +52,7 @@ public class DistributedLockAop {
             try {
                 rLock.unlock();
             } catch (IllegalMonitorStateException e) {
-
+                log.error("IllegalMonitorStateException on unlock. key={}, msg={}", keys, e.toString());
             } finally {
                 log.info("락 해제");
             }
