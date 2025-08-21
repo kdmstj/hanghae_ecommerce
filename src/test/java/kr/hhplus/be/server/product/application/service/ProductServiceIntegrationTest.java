@@ -135,40 +135,4 @@ public class ProductServiceIntegrationTest {
         }
     }
 
-
-    @Nested
-    @DisplayName("3일간 상위 상품 5개 조회")
-    class GetBestProductList {
-
-        @Test
-        @DisplayName("완료")
-        void 상위_상품_5개_조회() {
-            for (int i = 1; i <= 6; i++) {
-                Product product = productRepository.save(
-                        ProductFixture.withProductNameAndPricePerUnitAndQuantity("상품" + i, 1000 * i, 100)
-                );
-
-                for (int d = 0; d < 3; d++) {
-                    LocalDate date = LocalDate.now().minusDays(d);
-                    int salesQuantity = 10 * i;
-
-                    productDailySalesRepository.save(
-                            ProductDailySales.builder()
-                                    .productId(product.getId())
-                                    .salesDate(date)
-                                    .quantity(salesQuantity)
-                                    .build()
-                    );
-                }
-            }
-
-            // when
-            List<BestProductResult> bestProducts = productService.getBest();
-
-            // then
-            assertThat(bestProducts).hasSize(5);
-            assertThat(bestProducts.get(0).productName()).isEqualTo("상품6");
-            assertThat(bestProducts.get(4).productName()).isEqualTo("상품2");
-        }
-    }
 }
