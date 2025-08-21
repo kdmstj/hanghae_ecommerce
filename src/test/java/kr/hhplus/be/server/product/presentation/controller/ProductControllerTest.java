@@ -106,7 +106,7 @@ public class ProductControllerTest {
                     new BestProductResult(1L, "베스트상품1", 10),
                     new BestProductResult(2L, "베스트상품2", 20)
             );
-            when(productService.getBest()).thenReturn(bestProducts);
+            when(productService.findTop5BestProductsFor3Days()).thenReturn(bestProducts);
 
             // when & then
             mockMvc.perform(MockMvcRequestBuilders.get(BASE_URI + "/best")
