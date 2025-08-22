@@ -2,33 +2,33 @@ package kr.hhplus.be.server.coupon.application.service;
 
 import kr.hhplus.be.server.common.exception.BusinessException;
 import kr.hhplus.be.server.common.exception.ErrorCode;
-import kr.hhplus.be.server.common.lock.DistributedLock;
 import kr.hhplus.be.server.coupon.application.result.UserCouponResult;
 import kr.hhplus.be.server.coupon.domain.UserCouponStatus;
 import kr.hhplus.be.server.coupon.domain.entity.Coupon;
 import kr.hhplus.be.server.coupon.domain.entity.CouponQuantity;
 import kr.hhplus.be.server.coupon.domain.entity.UserCoupon;
 import kr.hhplus.be.server.coupon.domain.entity.UserCouponState;
-import kr.hhplus.be.server.coupon.domain.repository.CouponQuantityRepository;
-import kr.hhplus.be.server.coupon.domain.repository.CouponRepository;
-import kr.hhplus.be.server.coupon.domain.repository.UserCouponRepository;
-import kr.hhplus.be.server.coupon.domain.repository.UserCouponStateRepository;
+import kr.hhplus.be.server.coupon.domain.repository.*;
 import kr.hhplus.be.server.order.application.command.CouponUseCommand;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CouponService {
 
     private final UserCouponRepository userCouponRepository;
     private final UserCouponStateRepository userCouponStateRepository;
     private final CouponRepository couponRepository;
     private final CouponQuantityRepository couponQuantityRepository;
+    private final CouponIssueCacheRepository couponIssueCacheRepository;
 
     public List<UserCouponResult> getValidCoupons(long userId) {
 
@@ -38,27 +38,50 @@ public class CouponService {
                 .toList();
     }
 
-    @DistributedLock(
-            keys = {
-                    "'lock:coupon:' + #couponId",
-            },
-            type = DistributedLock.LockType.SINGLE
-    )
-    public UserCouponResult issue(long userId, long couponId) {
+    public void requestIssue(long userId, long couponId) {
+        Coupon coupon = getCoupon(couponId);
+        coupon.validateIssuePeriod();
 
-        if (userCouponRepository.existsByUserIdAndCouponId(userId, couponId)) {
+        if (couponIssueCacheRepository.existsIssuedUser(couponId, userId)) {
             throw new BusinessException(ErrorCode.ALREADY_ISSUED_COUPON);
         }
 
-        Coupon coupon = getCoupon(couponId);
-        CouponQuantity couponQuantity = couponQuantityRepository.findWithPessimisticLock(couponId);
+        CouponQuantity couponQuantity = couponQuantityRepository.findOneByCouponId(couponId);
+        long currentIssued = couponIssueCacheRepository.countIssuedUser(couponId);
+        if (couponQuantity.getTotalQuantity() <= currentIssued) {
+            throw new BusinessException(ErrorCode.EXCEED_QUANTITY);
+        }
+        couponIssueCacheRepository.saveIssuedUser(couponId, userId);
+        couponIssueCacheRepository.enqueue(couponId, userId);
+    }
 
-        coupon.validateIssuePeriod();
-        couponQuantity.increaseIssuedQuantity();
+    @Transactional
+    public void issuePendingCoupons(int batchSize) {
+        Set<Long> pendingCouponIds = couponIssueCacheRepository.popPendingCouponIds(batchSize);
+        if (pendingCouponIds.isEmpty()) {
+            return;
+        }
 
-        UserCoupon issuedCoupon = UserCoupon.create(userId, couponId, coupon.getIssuedEndedAt());
+        List<Coupon> pendingIssueCoupons = couponRepository.findAllByIdIn(pendingCouponIds);
 
-        return UserCouponResult.from(userCouponRepository.save(issuedCoupon));
+        for (Coupon coupon : pendingIssueCoupons) {
+            Long couponId = coupon.getId();
+
+            List<Long> userIds = couponIssueCacheRepository.popPendingCouponUserIds(couponId, batchSize);
+
+            for (Long userId : userIds) {
+                try {
+                    CouponQuantity couponQuantity = couponQuantityRepository.findWithPessimisticLock(couponId);
+                    couponQuantity.increaseIssuedQuantity();
+
+                    UserCoupon userCoupon = UserCoupon.create(userId, couponId, coupon.getIssuedEndedAt());
+                    userCouponRepository.save(userCoupon);
+
+                } catch (Exception e) {
+                    log.error("쿠폰 발급 실패");
+                }
+            }
+        }
     }
 
     @Transactional

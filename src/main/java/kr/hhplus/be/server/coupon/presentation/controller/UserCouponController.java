@@ -1,6 +1,8 @@
 package kr.hhplus.be.server.coupon.presentation.controller;
 
 import kr.hhplus.be.server.coupon.application.service.CouponService;
+import kr.hhplus.be.server.coupon.domain.entity.Coupon;
+import kr.hhplus.be.server.coupon.presentation.dto.CouponIssueResponse;
 import kr.hhplus.be.server.coupon.presentation.dto.UserCouponResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -25,11 +27,13 @@ public class UserCouponController {
     }
 
     @PutMapping("/{couponId}/issue")
-    public ResponseEntity<UserCouponResponse> issue(
+    public ResponseEntity<CouponIssueResponse> issue(
             @PathVariable long userId,
             @PathVariable long couponId
     ){
-        UserCouponResponse response = UserCouponResponse.from(couponService.issue(userId, couponId));
+
+        couponService.requestIssue(userId, couponId);
+        CouponIssueResponse response = new CouponIssueResponse(couponId, userId);
 
         return ResponseEntity.ok().body(response);
     }
