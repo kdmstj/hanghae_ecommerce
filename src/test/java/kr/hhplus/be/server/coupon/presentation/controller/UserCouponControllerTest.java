@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import java.util.List;
 
 import static org.hamcrest.Matchers.matchesPattern;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -73,16 +74,12 @@ public class UserCouponControllerTest {
             long couponId = 1L;
             UserCoupon userCoupon = UserCouponFixture.withUserIdAndCouponId(userId, couponId);
 
-            when(couponService.issue(userId, couponId)).thenReturn(UserCouponResult.from(userCoupon));
-
             // when & then
             mockMvc.perform(MockMvcRequestBuilders.put(BASE_URI + "/{couponId}/issue", userId, couponId)
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.id").value(userCoupon.getId()))
                     .andExpect(jsonPath("$.userId").value(userCoupon.getUserId()))
-                    .andExpect(jsonPath("$.couponId").value(userCoupon.getCouponId()))
-                    .andExpect(jsonPath("$.issuedAt").value(matchesPattern("\\d{4}-\\d{2}-\\d{2}T.*")));
+                    .andExpect(jsonPath("$.couponId").value(userCoupon.getCouponId()));
         }
 
         @Test
@@ -91,7 +88,9 @@ public class UserCouponControllerTest {
             // given
             long userId = 1;
             long couponId = -1;
-            when(couponService.issue(userId, couponId)).thenThrow(new BusinessException(ErrorCode.COUPON_NOT_FOUND));
+
+            doThrow(new BusinessException(ErrorCode.COUPON_NOT_FOUND))
+                    .when(couponService).requestIssue(userId, couponId);
 
             // when & then
             mockMvc.perform(MockMvcRequestBuilders.put(BASE_URI + "/{couponId}/issue", userId, couponId)
@@ -106,7 +105,8 @@ public class UserCouponControllerTest {
             // given
             long userId = 1L;
             long couponId = 1L;
-            when(couponService.issue(userId, couponId)).thenThrow(new BusinessException(ErrorCode.ALREADY_ISSUED_COUPON));
+            doThrow(new BusinessException(ErrorCode.ALREADY_ISSUED_COUPON))
+                    .when(couponService).requestIssue(userId, couponId);
 
             // when & then
             mockMvc.perform(MockMvcRequestBuilders.put(BASE_URI + "/{couponId}/issue", userId, couponId)
