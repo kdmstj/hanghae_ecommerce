@@ -24,15 +24,16 @@ public class ProductDaySalesRedisRepository implements ProductDaySalesRepository
     private final StringRedisTemplate redisTemplate;
 
     private static final String PRODUCT_RANKING_DAY_KEY_PREFIX = "product:ranking:day:";
-    private static final String PRODUCT_RANKING_AGG_3DAY_KEY_PREFIX = "product:ranking:agg3:";
+    private static final String PRODUCT_RANKING_AGG_3DAY_KEY_PREFIX = "product:ranking:agg:3day:";
 
     private static final Duration TTL_DAY = Duration.ofDays(4);
     private static final Duration TTL_AGG = Duration.ofMinutes(70);
 
+    private static final DateTimeFormatter DATE_KEY_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @Override
     public void incrementProductSalesQuantity(LocalDateTime orderedAt, List<ProductSalesIncrement> products) {
-        String key = PRODUCT_RANKING_DAY_KEY_PREFIX + orderedAt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        String key = PRODUCT_RANKING_DAY_KEY_PREFIX + orderedAt.format(DATE_KEY_FORMATTER);
         for (ProductSalesIncrement product : products) {
             redisTemplate.opsForZSet()
                     .incrementScore(key, String.valueOf(product.productId()), product.quantity());
@@ -46,7 +47,7 @@ public class ProductDaySalesRedisRepository implements ProductDaySalesRepository
         LocalDateTime now = LocalDateTime.now();
 
         List<String> keys = IntStream.range(0, day)
-                .mapToObj(i -> PRODUCT_RANKING_DAY_KEY_PREFIX + now.minusDays(i).format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                .mapToObj(i -> PRODUCT_RANKING_DAY_KEY_PREFIX + now.minusDays(i).format(DATE_KEY_FORMATTER))
                 .toList();
 
         String aggregatedKey = PRODUCT_RANKING_AGG_3DAY_KEY_PREFIX;
@@ -69,7 +70,7 @@ public class ProductDaySalesRedisRepository implements ProductDaySalesRepository
     @Override
     public List<SalesProductResult> findProductSales(LocalDate day) {
 
-        String key = PRODUCT_RANKING_DAY_KEY_PREFIX + day.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        String key = PRODUCT_RANKING_DAY_KEY_PREFIX + day.format(DATE_KEY_FORMATTER);
 
         Set<ZSetOperations.TypedTuple<String>> tuples =
                 redisTemplate.opsForZSet().rangeWithScores(key, 0, -1);
