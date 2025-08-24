@@ -46,11 +46,12 @@ public class CouponService {
             throw new BusinessException(ErrorCode.ALREADY_ISSUED_COUPON);
         }
 
-        CouponQuantity couponQuantity = couponQuantityRepository.findOneByCouponId(couponId);
-        long currentIssued = couponIssueCacheRepository.countIssuedUser(couponId);
-        if (couponQuantity.getTotalQuantity() <= currentIssued) {
+        int limitQuantity = couponIssueCacheRepository.getCouponLimitQuantity(couponId);
+        long issuedCount = couponIssueCacheRepository.countIssuedUser(couponId);
+        if (limitQuantity <= issuedCount) {
             throw new BusinessException(ErrorCode.EXCEED_QUANTITY);
         }
+
         couponIssueCacheRepository.saveIssuedUser(couponId, userId);
         couponIssueCacheRepository.enqueue(couponId, userId);
     }

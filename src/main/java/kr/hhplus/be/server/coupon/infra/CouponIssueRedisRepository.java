@@ -14,12 +14,26 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CouponIssueRedisRepository implements CouponIssueCacheRepository {
 
+    private static final String COUPON_LIMIT_QUANTITY_PREFIX = "coupon:quantity:limit:";
     private static final String COUPON_ISSUE_PREFIX = "coupon:issue:";
     private static final String COUPON_QUEUE_PREFIX = "coupon:queue:";
     private static final String PENDING_COUPON_KEY = "coupon:pending";
 
 
     private final StringRedisTemplate redisTemplate;
+
+    @Override
+    public void setCouponLimitQuantity(long couponId, int totalQuantity) {
+        redisTemplate.opsForValue().setIfAbsent(
+                COUPON_LIMIT_QUANTITY_PREFIX + couponId,
+                String.valueOf(totalQuantity)
+        );
+    }
+
+    @Override
+    public int getCouponLimitQuantity(long couponId) {
+        return Integer.parseInt(redisTemplate.opsForValue().get(COUPON_LIMIT_QUANTITY_PREFIX+ couponId));
+    }
 
     @Override
     public void saveIssuedUser(long couponId, long userId) {
