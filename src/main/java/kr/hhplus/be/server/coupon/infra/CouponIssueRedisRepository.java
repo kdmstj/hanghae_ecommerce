@@ -17,8 +17,7 @@ public class CouponIssueRedisRepository implements CouponIssueCacheRepository {
     private static final String COUPON_LIMIT_QUANTITY_PREFIX = "coupon:quantity:limit:";
     private static final String COUPON_ISSUE_PREFIX = "coupon:issue:";
     private static final String COUPON_QUEUE_PREFIX = "coupon:queue:";
-    private static final String PENDING_COUPON_KEY = "coupon:pending";
-
+    private static final String COUPON_PENDING_PREFIX = "coupon:pending";
 
     private final StringRedisTemplate redisTemplate;
 
@@ -55,12 +54,12 @@ public class CouponIssueRedisRepository implements CouponIssueCacheRepository {
     @Override
     public void enqueue(long couponId, long userId) {
         redisTemplate.opsForList().leftPush(COUPON_QUEUE_PREFIX + couponId, String.valueOf(userId));
-        redisTemplate.opsForSet().add(PENDING_COUPON_KEY, String.valueOf(couponId));
+        redisTemplate.opsForSet().add(COUPON_PENDING_PREFIX, String.valueOf(couponId));
     }
 
     @Override
     public Set<Long> popPendingCouponIds(int batchSize) {
-        Set<String> ids = redisTemplate.opsForSet().distinctRandomMembers(PENDING_COUPON_KEY, batchSize);
+        Set<String> ids = redisTemplate.opsForSet().distinctRandomMembers(COUPON_PENDING_PREFIX, batchSize);
         return ids == null ? Set.of() : ids.stream().map(Long::parseLong).collect(Collectors.toSet());
     }
 
