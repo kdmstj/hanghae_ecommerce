@@ -58,7 +58,7 @@ public class CouponService {
 
     @Transactional
     public void issuePendingCoupons(int batchSize) {
-        Set<Long> pendingCouponIds = couponIssueCacheRepository.popPendingCouponIds(batchSize);
+        List<Long> pendingCouponIds = couponIssueCacheRepository.popPendingCouponIds(batchSize);
         if (pendingCouponIds.isEmpty()) {
             return;
         }

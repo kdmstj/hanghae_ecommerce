@@ -7,8 +7,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -54,13 +52,17 @@ public class CouponIssueRedisRepository implements CouponIssueCacheRepository {
     @Override
     public void enqueue(long couponId, long userId) {
         redisTemplate.opsForList().leftPush(COUPON_QUEUE_PREFIX + couponId, String.valueOf(userId));
-        redisTemplate.opsForSet().add(COUPON_PENDING_PREFIX, String.valueOf(couponId));
+        redisTemplate.opsForList().leftPush(COUPON_PENDING_PREFIX, String.valueOf(couponId));
     }
 
-    @Override
-    public Set<Long> popPendingCouponIds(int batchSize) {
-        Set<String> ids = redisTemplate.opsForSet().distinctRandomMembers(COUPON_PENDING_PREFIX, batchSize);
-        return ids == null ? Set.of() : ids.stream().map(Long::parseLong).collect(Collectors.toSet());
+    public List<Long> popPendingCouponIds(int batchSize) {
+        List<Long> result = new ArrayList<>();
+        for (int i = 0; i < batchSize; i++) {
+            String couponIdStr = redisTemplate.opsForList().rightPop(COUPON_PENDING_PREFIX);
+            if (couponIdStr == null) break;
+            result.add(Long.parseLong(couponIdStr));
+        }
+        return result;
     }
 
     @Override
