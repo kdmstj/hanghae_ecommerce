@@ -67,9 +67,13 @@ public class CouponConcurrencyTest {
         void 동시에_쿠폰_발급_요청() throws Exception {
             // given
             Coupon coupon = couponRepository.save(CouponFixture.validPeriod());
+            long couponId = coupon.getId();
+            int totalQuantity = 100;
             couponQuantityRepository.save(
-                    CouponQuantityFixture.withCouponIdAndTotalQuantityAndIssuedQuantity(coupon.getId(), 100, 0)
+                    CouponQuantityFixture.withCouponIdAndTotalQuantityAndIssuedQuantity(couponId, totalQuantity, 0)
             );
+
+            couponIssueCacheRepository.setCouponLimitQuantity(couponId, totalQuantity);
 
             int threadCount = 10;
             ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
@@ -103,9 +107,13 @@ public class CouponConcurrencyTest {
         void 동시에_쿠폰_발급_후_스케줄러_실행() throws Exception {
             // given
             Coupon coupon = couponRepository.save(CouponFixture.validPeriod());
+            long couponId = coupon.getId();
+            int totalQuantity = 100;
             couponQuantityRepository.save(
-                    CouponQuantityFixture.withCouponIdAndTotalQuantityAndIssuedQuantity(coupon.getId(), 100, 0)
+                    CouponQuantityFixture.withCouponIdAndTotalQuantityAndIssuedQuantity(couponId, totalQuantity, 0)
             );
+
+            couponIssueCacheRepository.setCouponLimitQuantity(couponId, totalQuantity);
 
             int threadCount = 10;
             ExecutorService executorService = Executors.newFixedThreadPool(threadCount);

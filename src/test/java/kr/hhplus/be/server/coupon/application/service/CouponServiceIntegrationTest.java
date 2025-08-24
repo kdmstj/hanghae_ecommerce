@@ -8,10 +8,7 @@ import kr.hhplus.be.server.coupon.domain.UserCouponStatus;
 import kr.hhplus.be.server.coupon.domain.entity.Coupon;
 import kr.hhplus.be.server.coupon.domain.entity.UserCoupon;
 import kr.hhplus.be.server.coupon.domain.entity.UserCouponState;
-import kr.hhplus.be.server.coupon.domain.repository.CouponQuantityRepository;
-import kr.hhplus.be.server.coupon.domain.repository.CouponRepository;
-import kr.hhplus.be.server.coupon.domain.repository.UserCouponRepository;
-import kr.hhplus.be.server.coupon.domain.repository.UserCouponStateRepository;
+import kr.hhplus.be.server.coupon.domain.repository.*;
 import kr.hhplus.be.server.coupon.fixture.CouponFixture;
 import kr.hhplus.be.server.coupon.fixture.CouponQuantityFixture;
 import kr.hhplus.be.server.coupon.fixture.UserCouponFixture;
@@ -50,6 +47,9 @@ public class CouponServiceIntegrationTest {
 
     @Autowired
     private CouponQuantityRepository couponQuantityRepository;
+
+    @Autowired
+    private CouponIssueCacheRepository couponIssueCacheRepository;
 
     @Autowired
     private DataBaseCleanUp dataBaseCleanUp;
@@ -108,9 +108,13 @@ public class CouponServiceIntegrationTest {
                 // given
                 Coupon coupon = couponRepository.save(CouponFixture.validPeriod());
                 int issuedQuantity = 0;
+                long couponId = coupon.getId();
+                int totalQuantity = 100;
                 couponQuantityRepository.save(
-                        CouponQuantityFixture.withCouponIdAndTotalQuantityAndIssuedQuantity(coupon.getId(), 100, issuedQuantity)
+                        CouponQuantityFixture.withCouponIdAndTotalQuantityAndIssuedQuantity(couponId, totalQuantity, issuedQuantity)
                 );
+
+                couponIssueCacheRepository.setCouponLimitQuantity(couponId, totalQuantity);
                 long userId = 1L;
 
                 // when
@@ -134,9 +138,15 @@ public class CouponServiceIntegrationTest {
             void 쿠폰_발급_실패_이미_보유한_쿠폰(){
                 // given
                 Coupon coupon = couponRepository.save(CouponFixture.validPeriod());
+                long couponId = coupon.getId();
+                int totalQuantity = 100;
+
                 couponQuantityRepository.save(
-                        CouponQuantityFixture.withCouponIdAndTotalQuantityAndIssuedQuantity(coupon.getId(), 100, 0)
+                        CouponQuantityFixture.withCouponIdAndTotalQuantityAndIssuedQuantity(couponId, totalQuantity, 0)
                 );
+
+                couponIssueCacheRepository.setCouponLimitQuantity(couponId, totalQuantity);
+
                 long userId = 1L;
 
                 couponService.requestIssue(userId, coupon.getId());
@@ -193,14 +203,17 @@ public class CouponServiceIntegrationTest {
                 // given
                 Coupon coupon = couponRepository.save(CouponFixture.validPeriod());
                 int totalQuantity = 100;
+                long couponId = coupon.getId();
                 couponQuantityRepository.save(
                         CouponQuantityFixture.withCouponIdAndTotalQuantityAndIssuedQuantity(coupon.getId(), totalQuantity, 0)
                 );
-                long userId = 1L;
+                couponIssueCacheRepository.setCouponLimitQuantity(couponId, totalQuantity);
 
                 for (int i = 0; i < totalQuantity; i++) {
-                    couponService.requestIssue(i + 1000L, coupon.getId());
+                    couponService.requestIssue(i + 1000L, couponId);
                 }
+
+                long userId = 1L;
 
                 // when & then
                 assertThatThrownBy(() -> couponService.requestIssue(userId, coupon.getId()))
