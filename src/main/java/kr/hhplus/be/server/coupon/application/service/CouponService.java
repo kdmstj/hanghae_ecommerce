@@ -70,18 +70,14 @@ public class CouponService {
 
             List<Long> userIds = couponIssueCacheRepository.popPendingCouponUserIds(couponId, batchSize);
 
-            for (Long userId : userIds) {
-                try {
-                    CouponQuantity couponQuantity = couponQuantityRepository.findWithPessimisticLock(couponId);
-                    couponQuantity.increaseIssuedQuantity();
+            int increaseIssuedQuantity = userIds.size();
+            CouponQuantity couponQuantity = couponQuantityRepository.findWithPessimisticLock(couponId);
+            couponQuantity.increaseIssuedQuantity(increaseIssuedQuantity);
 
-                    UserCoupon userCoupon = UserCoupon.create(userId, couponId, coupon.getIssuedEndedAt());
-                    userCouponRepository.save(userCoupon);
-
-                } catch (Exception e) {
-                    log.error("쿠폰 발급 실패");
-                }
-            }
+            List<UserCoupon> coupons = userIds.stream()
+                    .map(userId -> UserCoupon.create(userId, couponId, coupon.getIssuedEndedAt()))
+                    .toList();
+            userCouponRepository.saveAll(coupons);
         }
     }
 
