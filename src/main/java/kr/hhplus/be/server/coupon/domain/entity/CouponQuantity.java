@@ -38,4 +38,13 @@ public class CouponQuantity {
         this.issuedQuantity += 1;
         this.updatedAt = LocalDateTime.now();
     }
+
+    public void increaseIssuedQuantity(int amount) {
+        if (this.issuedQuantity + amount > this.totalQuantity) {
+            throw new BusinessException(ErrorCode.EXCEED_QUANTITY);
+        }
+
+        this.issuedQuantity += amount;
+        this.updatedAt = LocalDateTime.now();
+    }
 }

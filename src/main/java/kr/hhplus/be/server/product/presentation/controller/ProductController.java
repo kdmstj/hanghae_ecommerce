@@ -40,7 +40,7 @@ public class ProductController {
     @GetMapping("/best")
     public ResponseEntity<List<BestProductResponse>> getBestProduct(){
 
-        List<BestProductResponse> response = BestProductResponse.from(productService.getBest());
+        List<BestProductResponse> response = BestProductResponse.from(productService.findTop5BestProductsFor3Days());
 
         return ResponseEntity.ok().body(response);
     }
