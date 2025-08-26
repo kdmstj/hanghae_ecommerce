@@ -7,13 +7,14 @@ import kr.hhplus.be.server.coupon.application.service.CouponService;
 import kr.hhplus.be.server.order.application.command.OrderCreateCommand;
 import kr.hhplus.be.server.order.application.event.OrderCreatedEvent;
 import kr.hhplus.be.server.order.application.event.OrderCreatedProduct;
+import kr.hhplus.be.server.order.application.event.OrderEventPublisher;
 import kr.hhplus.be.server.order.application.result.OrderAggregate;
 import kr.hhplus.be.server.order.application.result.OrderResult;
 import kr.hhplus.be.server.order.application.service.OrderService;
 import kr.hhplus.be.server.point.application.service.PointService;
 import kr.hhplus.be.server.product.application.service.ProductService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 
@@ -21,13 +22,14 @@ import java.time.LocalDateTime;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class OrderFacade {
 
     private final OrderService orderService;
     private final ProductService productService;
     private final CouponService couponService;
     private final PointService pointService;
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final OrderEventPublisher orderEventPublisher;
 
     @DistributedLock(
             keys = {
@@ -37,6 +39,9 @@ public class OrderFacade {
             type = DistributedLock.LockType.MULTI
     )
     public OrderResult place(long userId, OrderCreateCommand command) {
+        log.info("[OrderFacade.place] thread={} id={}",
+                Thread.currentThread().getName(), Thread.currentThread().getId());
+
         OrderAggregate orderAggregate = orderService.create(userId, command.products(), command.payment(), command.coupons());
         long orderId = orderAggregate.order().getId();
         LocalDateTime orderedAt = LocalDateTime.now();
@@ -51,7 +56,7 @@ public class OrderFacade {
             throw new BusinessException(ErrorCode.CONFLICT_USE);
         }
 
-        applicationEventPublisher.publishEvent(new OrderCreatedEvent(
+        orderEventPublisher.publish(new OrderCreatedEvent(
                 orderedAt,
                 command.products().stream()
                         .map(product -> new OrderCreatedProduct(product.productId(), product.quantity()))
