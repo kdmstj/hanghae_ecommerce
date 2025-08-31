@@ -22,7 +22,7 @@ public class OrderProductService {
                         command.productId(),
                         command.quantity()
                 ))
-                .collect(Collectors.toList());
+                .toList();
 
         return orderProductRepository.saveAll(orderProducts);
     }

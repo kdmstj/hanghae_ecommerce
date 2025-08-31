@@ -23,7 +23,7 @@ public class OrderCouponService {
                         command.userCouponId(),
                         command.discountAmount()
                 ))
-                .collect(Collectors.toList());
+                .toList();
 
         return orderCouponRepository.saveAll(orderCoupons);
     }
