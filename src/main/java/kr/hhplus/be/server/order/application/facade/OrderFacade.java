@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.order.application.facade;
 
+import kr.hhplus.be.server.common.event.EventPublisher;
 import kr.hhplus.be.server.common.exception.BusinessException;
 import kr.hhplus.be.server.common.exception.ErrorCode;
 import kr.hhplus.be.server.common.lock.DistributedLock;
@@ -7,7 +8,6 @@ import kr.hhplus.be.server.coupon.application.service.CouponService;
 import kr.hhplus.be.server.order.application.command.OrderCreateCommand;
 import kr.hhplus.be.server.order.application.event.OrderCreatedEvent;
 import kr.hhplus.be.server.order.application.event.OrderCreatedProduct;
-import kr.hhplus.be.server.order.application.event.OrderEventPublisher;
 import kr.hhplus.be.server.order.application.result.OrderAggregate;
 import kr.hhplus.be.server.order.application.result.OrderResult;
 import kr.hhplus.be.server.order.application.service.OrderService;
@@ -29,7 +29,7 @@ public class OrderFacade {
     private final ProductService productService;
     private final CouponService couponService;
     private final PointService pointService;
-    private final OrderEventPublisher orderEventPublisher;
+    private final EventPublisher eventPublisher;
 
     @DistributedLock(
             keys = {
@@ -56,7 +56,7 @@ public class OrderFacade {
             throw new BusinessException(ErrorCode.CONFLICT_USE);
         }
 
-        orderEventPublisher.publish(new OrderCreatedEvent(
+        eventPublisher.publish(new OrderCreatedEvent(
                 orderedAt,
                 command.products().stream()
                         .map(product -> new OrderCreatedProduct(product.productId(), product.quantity()))
