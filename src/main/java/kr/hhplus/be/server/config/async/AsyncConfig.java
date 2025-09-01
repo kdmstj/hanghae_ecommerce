@@ -1,15 +1,18 @@
 package kr.hhplus.be.server.config.async;
 
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.TaskDecorator;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.concurrent.Executor;
 
 @Configuration
@@ -29,6 +32,8 @@ public class AsyncConfig implements AsyncConfigurer {
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(30);
 
+        executor.setTaskDecorator(new MdcTaskDecorator());
+
         executor.initialize();
         return executor;
     }
@@ -45,6 +50,25 @@ public class AsyncConfig implements AsyncConfigurer {
             log.error("Async error: method={} args={}",
                     method.getDeclaringClass().getSimpleName() + "#" + method.getName(),
                     Arrays.toString(args), ex);
+        }
+    }
+
+    private static class MdcTaskDecorator implements TaskDecorator {
+
+        @Override
+        public Runnable decorate(Runnable runnable) {
+            Map<String, String> contextMap = MDC.getCopyOfContextMap();
+
+            return () -> {
+                try {
+                    if(contextMap != null){
+                        MDC.setContextMap(contextMap);
+                    }
+                    runnable.run();
+                } finally {
+                    MDC.clear();
+                }
+            };
         }
     }
 }
