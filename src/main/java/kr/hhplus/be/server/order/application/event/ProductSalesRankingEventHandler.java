@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.order.application.event;
 
+import kr.hhplus.be.server.order.domain.event.OrderCreatedEvent;
 import kr.hhplus.be.server.product.application.command.SalesProductCommand;
 import kr.hhplus.be.server.product.application.service.ProductSalesRankingService;
 import lombok.RequiredArgsConstructor;
