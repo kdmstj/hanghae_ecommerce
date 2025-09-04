@@ -10,6 +10,20 @@ spring:
         format_sql: true
         highlight_sql: true
         use_sql_comments: true
+  kafka:
+    consumer:
+      auto-offset-reset: earliest
+      enable-auto-commit: true
+      auto-commit-interval: 1s
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "kr.hhplus.be.server.**"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      retries: 3
+      acks: all
 #  p6spy:
 #    # 커스텀 로거 클래스 지정: 사용할 클래스 파일 (logging=custom일 때만). 클래스는 com.p6spy.engine.spy.appender.FormattedLogger를 구현해야 함
 #    custom-appender-class: my.custom.LoggerClass
