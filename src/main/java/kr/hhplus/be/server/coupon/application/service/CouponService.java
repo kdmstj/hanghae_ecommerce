@@ -2,12 +2,14 @@ package kr.hhplus.be.server.coupon.application.service;
 
 import kr.hhplus.be.server.common.exception.BusinessException;
 import kr.hhplus.be.server.common.exception.ErrorCode;
+import kr.hhplus.be.server.coupon.application.event.CouponEventPublisher;
 import kr.hhplus.be.server.coupon.application.result.UserCouponResult;
 import kr.hhplus.be.server.coupon.domain.UserCouponStatus;
 import kr.hhplus.be.server.coupon.domain.entity.Coupon;
 import kr.hhplus.be.server.coupon.domain.entity.CouponQuantity;
 import kr.hhplus.be.server.coupon.domain.entity.UserCoupon;
 import kr.hhplus.be.server.coupon.domain.entity.UserCouponState;
+import kr.hhplus.be.server.coupon.domain.event.CouponIssueEvent;
 import kr.hhplus.be.server.coupon.domain.repository.*;
 import kr.hhplus.be.server.order.application.command.CouponUseCommand;
 import lombok.RequiredArgsConstructor;
@@ -17,18 +19,22 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class CouponService {
 
+    private final CouponEventPublisher couponEventPublisher;
     private final UserCouponRepository userCouponRepository;
     private final UserCouponStateRepository userCouponStateRepository;
     private final CouponRepository couponRepository;
     private final CouponQuantityRepository couponQuantityRepository;
     private final CouponIssueCacheRepository couponIssueCacheRepository;
+
+    public void requestIssue(long userId, long couponId) {
+        couponEventPublisher.publish(new CouponIssueEvent(userId, couponId));
+    }
 
     public List<UserCouponResult> getValidCoupons(long userId) {
 
@@ -38,7 +44,8 @@ public class CouponService {
                 .toList();
     }
 
-    public void requestIssue(long userId, long couponId) {
+    @Transactional
+    public void handleCouponIssue(long userId, long couponId) {
         Coupon coupon = getCoupon(couponId);
         coupon.validateIssuePeriod();
 
@@ -53,32 +60,11 @@ public class CouponService {
         }
 
         couponIssueCacheRepository.saveIssuedUser(couponId, userId);
-        couponIssueCacheRepository.enqueue(couponId, userId);
-    }
 
-    @Transactional
-    public void issuePendingCoupons(int batchSize) {
-        List<Long> pendingCouponIds = couponIssueCacheRepository.popPendingCouponIds(batchSize);
-        if (pendingCouponIds.isEmpty()) {
-            return;
-        }
+        CouponQuantity couponQuantity = couponQuantityRepository.findWithPessimisticLock(couponId);
+        couponQuantity.increaseIssuedQuantity();
 
-        List<Coupon> pendingIssueCoupons = couponRepository.findAllByIdIn(pendingCouponIds);
-
-        for (Coupon coupon : pendingIssueCoupons) {
-            Long couponId = coupon.getId();
-
-            List<Long> userIds = couponIssueCacheRepository.popPendingCouponUserIds(couponId, batchSize);
-
-            int increaseIssuedQuantity = userIds.size();
-            CouponQuantity couponQuantity = couponQuantityRepository.findWithPessimisticLock(couponId);
-            couponQuantity.increaseIssuedQuantity(increaseIssuedQuantity);
-
-            List<UserCoupon> coupons = userIds.stream()
-                    .map(userId -> UserCoupon.create(userId, couponId, coupon.getIssuedEndedAt()))
-                    .toList();
-            userCouponRepository.saveAll(coupons);
-        }
+        userCouponRepository.save(UserCoupon.create(userId, couponId, coupon.getIssuedEndedAt()));
     }
 
     @Transactional

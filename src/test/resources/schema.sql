@@ -99,3 +99,13 @@ CREATE TABLE product_daily_sales (
     sales_date DATE NOT NULL,
     quantity INT NOT NULL
 );
+
+CREATE TABLE outbox_event (
+     id BIGINT AUTO_INCREMENT PRIMARY KEY,
+     aggregate_type VARCHAR(100) NOT NULL,
+     aggregate_id BIGINT NOT NULL,
+     topic VARCHAR(200) NOT NULL,
+     payload TEXT NOT NULL,
+     status VARCHAR(20) NOT NULL DEFAULT 'INIT',
+     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
