@@ -126,7 +126,6 @@ public class CouponServiceIntegrationTest {
                 assertThat(userCouponRepository.existsByUserIdAndCouponId(userId, coupon.getId()))
                         .isFalse();
 
-                couponService.issuePendingCoupons(10);
                 assertThat(couponQuantityRepository.findOneByCouponId(coupon.getId()).getIssuedQuantity())
                         .isEqualTo(issuedQuantity + 1);
                 assertThat(userCouponRepository.existsByUserIdAndCouponId(userId, coupon.getId()))

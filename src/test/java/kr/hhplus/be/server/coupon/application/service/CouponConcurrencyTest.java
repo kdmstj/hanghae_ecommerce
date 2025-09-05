@@ -133,8 +133,6 @@ public class CouponConcurrencyTest {
             latch.await();
             executorService.shutdown();
 
-            couponService.issuePendingCoupons(100);
-
             CouponQuantity cq = couponQuantityRepository.findOneByCouponId(coupon.getId());
             assertThat(cq.getIssuedQuantity()).isEqualTo(threadCount);
             assertThat(userCouponRepository.count()).isEqualTo(threadCount);
