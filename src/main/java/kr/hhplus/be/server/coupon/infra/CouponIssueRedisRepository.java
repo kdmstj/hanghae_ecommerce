@@ -48,31 +48,4 @@ public class CouponIssueRedisRepository implements CouponIssueCacheRepository {
     public long countIssuedUser(long couponId) {
         return redisTemplate.opsForSet().size(COUPON_ISSUE_PREFIX + couponId);
     }
-
-    @Override
-    public void enqueue(long couponId, long userId) {
-        redisTemplate.opsForList().leftPush(COUPON_QUEUE_PREFIX + couponId, String.valueOf(userId));
-        redisTemplate.opsForList().leftPush(COUPON_PENDING_PREFIX, String.valueOf(couponId));
-    }
-
-    public List<Long> popPendingCouponIds(int batchSize) {
-        List<Long> result = new ArrayList<>();
-        for (int i = 0; i < batchSize; i++) {
-            String couponIdStr = redisTemplate.opsForList().rightPop(COUPON_PENDING_PREFIX);
-            if (couponIdStr == null) break;
-            result.add(Long.parseLong(couponIdStr));
-        }
-        return result;
-    }
-
-    @Override
-    public List<Long> popPendingCouponUserIds(long couponId, int batchSize) {
-        List<Long> result = new ArrayList<>();
-        for (int i = 0; i < batchSize; i++) {
-            String userIdStr = redisTemplate.opsForList().rightPop(COUPON_QUEUE_PREFIX + couponId);
-            if (userIdStr == null) break;
-            result.add(Long.parseLong(userIdStr));
-        }
-        return result;
-    }
 }
