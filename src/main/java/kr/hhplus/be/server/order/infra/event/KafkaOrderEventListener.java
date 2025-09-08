@@ -17,8 +17,8 @@ public class KafkaOrderEventListener implements OrderEventListener {
     private final ProductSalesRankingService productSalesRankingService;
 
     @KafkaListener(
-            topics = "order.created",
-            groupId = "${spring.kafka.consumer.group-id}"
+            topics = "${kafka.topics.order.created-name}",
+            groupId = "${kafka.topics.order.created-group-id}"
     )
     public void on(OrderCreatedEvent event) {
 

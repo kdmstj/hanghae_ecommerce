@@ -16,8 +16,8 @@ public class KafkaCouponEventListener implements CouponEventListener {
     private final CouponService couponService;
 
     @KafkaListener(
-            topics = "coupon.issue",
-            groupId = "${spring.kafka.consumer.group-id}",
+            topics = "${kafka.topics.coupon.issue-name}",
+            groupId = "${kafka.topics.coupon.issue-group-id}",
             concurrency = "3"
     )
     public void on(CouponIssueEvent event){

@@ -36,7 +36,6 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
-      group-id: hhplus-local
       auto-offset-reset: earliest
       enable-auto-commit: true
       auto-commit-interval: 1s
@@ -49,3 +48,17 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       retries: 3
       acks: all
+
+
+kafka:
+  topics:
+    order:
+      created-name: order.created
+      created-group-id: hhplus-order-created-group
+      created-partitions: 3
+      created-replicas: 1
+    coupon:
+      issue-name: coupon.issue
+      issue-group-id: hhplus-order-created-group
+      issue-partitions: 3
+      issue-replicas: 1
