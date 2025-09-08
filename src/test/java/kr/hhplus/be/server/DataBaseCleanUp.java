@@ -22,6 +22,7 @@ public class DataBaseCleanUp {
                 , "user_point", "point_history"
                 , "product", "product_daily_sales"
                 , "orders", "order_coupon", "order_payment", "order_product"
+                ,"outbox_event"
         );
 
         for (String tableName : tableNames) {

@@ -33,3 +33,32 @@ spring:
     redis:
       host: localhost
       port: 6379
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      auto-offset-reset: latest
+      enable-auto-commit: true
+      auto-commit-interval: 1s
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "kr.hhplus.be.server.**"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      retries: 3
+      acks: all
+
+
+kafka:
+  topics:
+    order:
+      created-name: order.created
+      created-group-id: hhplus-order-created-group
+      created-partitions: 3
+      created-replicas: 1
+    coupon:
+      issue-name: coupon.issue
+      issue-group-id: hhplus-order-created-group
+      issue-partitions: 3
+      issue-replicas: 1
