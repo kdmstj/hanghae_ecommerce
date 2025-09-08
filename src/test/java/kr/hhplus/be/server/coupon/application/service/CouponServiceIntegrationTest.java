@@ -99,36 +99,29 @@ public class CouponServiceIntegrationTest {
         }
 
         @Nested
-        @DisplayName("쿠폰 발급")
-        class IssueUserCoupon {
+        @DisplayName("쿠폰 발급 처리")
+        class ConsumeCouponIssue {
 
             @Test
             @DisplayName("성공")
-            void 쿠폰_발급_성공(){
+            void 쿠폰_발급_성공() {
                 // given
                 Coupon coupon = couponRepository.save(CouponFixture.validPeriod());
-                int issuedQuantity = 0;
                 long couponId = coupon.getId();
                 int totalQuantity = 100;
                 couponQuantityRepository.save(
-                        CouponQuantityFixture.withCouponIdAndTotalQuantityAndIssuedQuantity(couponId, totalQuantity, issuedQuantity)
+                        CouponQuantityFixture.withCouponIdAndTotalQuantityAndIssuedQuantity(couponId, totalQuantity, 0)
                 );
-
                 couponIssueCacheRepository.setCouponLimitQuantity(couponId, totalQuantity);
                 long userId = 1L;
 
                 // when
-                couponService.requestIssue(userId, coupon.getId());
+                couponService.handleCouponIssue(userId, couponId);
 
                 // then
-                assertThat(couponQuantityRepository.findOneByCouponId(coupon.getId()).getIssuedQuantity())
-                        .isEqualTo(issuedQuantity);
-                assertThat(userCouponRepository.existsByUserIdAndCouponId(userId, coupon.getId()))
-                        .isFalse();
-
-                assertThat(couponQuantityRepository.findOneByCouponId(coupon.getId()).getIssuedQuantity())
-                        .isEqualTo(issuedQuantity + 1);
-                assertThat(userCouponRepository.existsByUserIdAndCouponId(userId, coupon.getId()))
+                assertThat(couponQuantityRepository.findOneByCouponId(couponId).getIssuedQuantity())
+                        .isEqualTo(1);
+                assertThat(userCouponRepository.existsByUserIdAndCouponId(userId, couponId))
                         .isTrue();
             }
 
@@ -148,10 +141,10 @@ public class CouponServiceIntegrationTest {
 
                 long userId = 1L;
 
-                couponService.requestIssue(userId, coupon.getId());
+                couponService.handleCouponIssue(userId, coupon.getId());
 
                 // when & then
-                assertThatThrownBy(() -> couponService.requestIssue(userId, coupon.getId()))
+                assertThatThrownBy(() -> couponService.handleCouponIssue(userId, coupon.getId()))
                         .isInstanceOf(BusinessException.class)
                         .hasMessageContaining(ErrorCode.ALREADY_ISSUED_COUPON.getMessage());
             }
@@ -161,7 +154,7 @@ public class CouponServiceIntegrationTest {
             void 쿠폰_발급_실패_존재하지_않는_쿠폰(){
                 // when & then
                 long userId = 1L;
-                assertThatThrownBy(() -> couponService.requestIssue(1L, 999L))
+                assertThatThrownBy(() -> couponService.handleCouponIssue(1L, 999L))
                         .isInstanceOf(BusinessException.class)
                         .hasMessageContaining(ErrorCode.COUPON_NOT_FOUND.getMessage());
 
@@ -177,7 +170,7 @@ public class CouponServiceIntegrationTest {
                 long userId = 1L;
 
                 // when & then
-                assertThatThrownBy(() -> couponService.requestIssue(userId, coupon.getId()))
+                assertThatThrownBy(() -> couponService.handleCouponIssue(userId, coupon.getId()))
                         .isInstanceOf(BusinessException.class)
                         .hasMessageContaining(ErrorCode.ISSUE_PERIOD_NOT_STARTED.getMessage());
             }
@@ -191,7 +184,7 @@ public class CouponServiceIntegrationTest {
                 long userId = 1L;
 
                 // when & then
-                assertThatThrownBy(() -> couponService.requestIssue(userId, coupon.getId()))
+                assertThatThrownBy(() -> couponService.handleCouponIssue(userId, coupon.getId()))
                         .isInstanceOf(BusinessException.class)
                         .hasMessageContaining(ErrorCode.ISSUE_PERIOD_ENDED.getMessage());
             }
@@ -209,13 +202,13 @@ public class CouponServiceIntegrationTest {
                 couponIssueCacheRepository.setCouponLimitQuantity(couponId, totalQuantity);
 
                 for (int i = 0; i < totalQuantity; i++) {
-                    couponService.requestIssue(i + 1000L, couponId);
+                    couponIssueCacheRepository.saveIssuedUser(couponId, 10_000L + i);
                 }
 
                 long userId = 1L;
 
                 // when & then
-                assertThatThrownBy(() -> couponService.requestIssue(userId, coupon.getId()))
+                assertThatThrownBy(() -> couponService.handleCouponIssue(userId, coupon.getId()))
                         .isInstanceOf(BusinessException.class)
                         .hasMessageContaining(ErrorCode.EXCEED_QUANTITY.getMessage());
             }
