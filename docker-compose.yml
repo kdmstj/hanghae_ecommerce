@@ -10,8 +10,7 @@ services:
       - MYSQL_PASSWORD=application
       - MYSQL_DATABASE=hhplus
     volumes:
-      - ./data/mysql/:/var/lib/mysql
-
+      - ./mysql/initdb.d:/docker-entrypoint-initdb.d
   redis:
     image: redis:7.4.2
     container_name: redis
