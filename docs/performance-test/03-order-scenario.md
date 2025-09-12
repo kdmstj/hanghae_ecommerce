@@ -4,23 +4,18 @@
 
 상품 조회 -> 주문/결제까지 사용자 주요 흐름인 시나리오를 테스트하는 것이 적합하다고 판단하였습니다.
 
-'http_req_failed': ['rate<0.02'],
-'http_req_duration{endpoint:product_detail}': ['p(95)<600'],
-'http_req_duration{endpoint:user_coupons}':   ['p(95)<600'],
-'http_req_duration{endpoint:order_place}':    ['p(95)<800'],
-
 ### 1) 목표(SLA)
 - 응답 지연 시간
-  - 상품 상세 조회 : p(95) < 600ms
-  - 사용자 쿠폰 목록 조회 : p(95) < 600ms
-  - 주문/결제: p(95) < 800ms
+  - 상품 상세 조회 : **p(95) < 600ms**
+  - 사용자 쿠폰 목록 조회 : **p(95) < 600ms**
+  - 주문/결제: **p(95) < 800ms**
 - 실패율 : **실패율 < 0.2%**
   - 여정 성공률과 각 API 에러율 기준 모두
 
 ### 2) 부하 모델
 본 테스트는 **ramping-arrival-rate** 방식을 적용하여 RPS 를 목표로 설정하였습니다.
-- 방문 평균 RPS: 50 RPS
-- 피크 RPS: 120 RPS
+- 방문 평균 RPS: **50 RPS**
+- 피크 RPS: **120 RPS**
 - 여정 단게
   - GET /api/v1/products/{id}
   - GET /api/v1/users/{userId}/coupons
@@ -29,6 +24,8 @@
 
 ### 3) 스테이지 구성
 부하를 점진적으로 증가시킨 후 피크 구간을 검증하고 종료하는 시나리오로 구성하였습니다.
+(실제 intro 에서 계산한 RPS 는 로컬에서 테스트하기 너무 높아서 수정하였습니다.)
+
 - 워밍업 단계: 15 RPS × 30초
 - 평균 근접 단계: 50 RPS × 60초
 - 피크 검증 단계: 120 RPS × 60초
@@ -49,11 +46,6 @@ stages: [
 k6 run --out influxdb=http://localhost:8086/k6 ./k6/order-scenario.js
 ```
 
-### 5) 관측 포인트
-테스트 수행 시 다음 항목을 중점적으로 모니터링합니다.
-- API 지표: RPS, p95 및 p99 응답 지연 시간, 실패율, 타임아웃 발생 여부
-- DB 지표: 1초 이상 소요되는 슬로우 쿼리 발생 여부, 실행 계획 변화, 인덱스 사용률, 락 대기 상황
-- JVM 및 풀 지표: 스레드풀 큐 길이, DB 커넥션풀 대기 시간, 메모리 사용량
 
 ## 결과
 ```
@@ -101,28 +93,29 @@ ERRO thresholds on metrics 'http_req_duration{endpoint:order_place}, http_req_du
 
 ### 2) 주요 지표 분석응답 시간(전체)
 
-- **응답 시간(전체)**
-  - 평균: 3.34초
-  - p95: 6.00초
-  - 최소: 5.50ms, 최대: 12.91초
+- **응답 시간**
+  - 평균: **3.34초**
+  - p95: **6.00초**
+  - 최소: **5.50ms**, 최대: **12.91초**
   - 엔드포인트별 p95
-    - product_detail: 5.96초
-    - user_coupons: 5.68초
-    - order_place: 6.39초 </br>
+    - product_detail: **5.96초**
+    - user_coupons: **5.68초**
+    - order_place: **6.39초** </br>
   → 각 API의 p95가 목표치(600ms/800ms)를 7~10배 초과.
 
 - **처리량**
-  - 요청 처리율: ~42 req/s (http_reqs 7,956건 / 총 소요시간 기준)
-  - dropped_iterations: 6,422건</br>
+  - 요청 처리율: **~42 req/s** (http_reqs 7,956건 / 총 소요시간 기준)
+  - dropped_iterations: **6,422건**</br>
  → 응답 지연으로 목표 도착률을 유지하지 못해 드롭 발생.
 
 - **VU 활용**
   - maxVUs=200 도달, Insufficient VUs 경고 발생
-  - iteration_duration 평균 10.17초(p95 15.61초) → 단일 여정이 길어 VU 확장 대비 처리율 증가가 제한적.
+  - iteration_duration 평균 10.17초(p95 15.61초) </br>
+  → 단일 여정이 길어 VU 확장 대비 처리율 증가가 제한적.
 
 - **실패율**
-  - 전체: 1.05% (84/7,956)
-  - 체크 실패: order 2xx 78건, coupons 2xx 2건, detail 2xx 4건
+  - 전체: **1.05%** (84/7,956)
+  - 체크 실패: order 2xx **78건**, coupons 2xx **2건**, detail 2xx **4건**
 ---
 
 ### 3) 결론

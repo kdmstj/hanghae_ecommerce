@@ -16,7 +16,7 @@
 ## 2. 테스트 도구 / 환경
 
 - 도구 : K6 -> InfluxDB -> Grafana (대시보드)
-- 실행 환경: 로컬(MacBook Air M1 / 16GB RAM)에서 k6 실행- docker 구성
+- 실행 환경: 로컬(MacBook Air M1 / 16GB RAM)에서 k6 실행
 - Docker 구성 : InfluxDB + Grafana
 - 실행 명령어
   ```
