@@ -148,6 +148,7 @@ sequenceDiagram
 
 ### 2-1-3. 선착순 발급 (Redis + Kafka)
 ```
+mermaid
 sequenceDiagram
   autonumber
   participant User as User
