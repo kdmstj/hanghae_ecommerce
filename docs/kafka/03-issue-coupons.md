@@ -1,51 +1,41 @@
 ## 선착순 쿠폰 발급 Kafka 적용 문서
 ```mermaid
 sequenceDiagram
-    autonumber
-    actor C as Client
-    participant Ctrl as CouponController
-    participant Svc as CouponService (requestIssue)
-    participant Pub as KafkaCouponEventPublisher
-    participant K as Kafka (topic: coupon.issue, key=couponId)
-    participant Lis as KafkaCouponEventListener
-    participant Svc2 as CouponService (handleCouponIssue)
-    participant R as Redis (IssueSet/Limit/Count)
-    participant DB as DB (CouponQuantity/UserCoupon)
+  autonumber
+  participant User as User
+  participant CouponService as CouponService
+  participant Kafka as Kafka Broker (topic: coupon.issue.requested)
+  participant Consumer as CouponIssueConsumer
+  participant Redis as Redis (발급 캐시)
+  participant DB as Database (SOT)
 
-    C->>Ctrl: PUT /{couponId}/issue (userId)
-    Ctrl->>Svc: requestIssue(userId, couponId)
-    Svc->>Pub: publish(new CouponIssueEvent)
-    Pub->>K: send("coupon.issue", key=couponId, event)
-    Note over K: 같은 couponId는 같은 파티션으로<br/>순서 보장
+  User ->> CouponService: 쿠폰 발급 요청
+  CouponService ->> Kafka: CouponIssueEvent(userId, couponId) 발행
+  CouponService -->> User: 발급 요청 접수 완료 (비동기 응답)
 
-    par 비동기 처리
-        K-->>Lis: CouponIssueEvent(userId, couponId)
-        Lis->>Svc2: handleCouponIssue(userId, couponId)
-        Svc2->>DB: findById(couponId) & validateIssuePeriod()
-        alt Redis: 중복 체크
-            Svc2->>R: SISMEMBER coupon:issue:{couponId} userId?
-            R-->>Svc2: true
-            Svc2-->>Lis: throw ALREADY_ISSUED_COUPON
-        else Redis: 수량 체크
-            Svc2->>R: GET coupon:quantity:limit:{couponId}
-            R-->>Svc2: limit
-            Svc2->>R: SCARD coupon:issue:{couponId}
-            R-->>Svc2: issuedCount
-            alt issuedCount >= limit
-                Svc2-->>Lis: throw EXCEED_QUANTITY
-            else 발급 가능
-                Svc2->>R: SADD coupon:issue:{couponId} userId
-                Note right of R: 중복 발급 사전 차단
-                Svc2->>DB: SELECT ... FOR UPDATE (findWithPessimisticLock)
-                Svc2->>DB: increaseIssuedQuantity()
-                Svc2->>DB: INSERT user_coupon(userId, couponId, ...)
-                DB-->>Svc2: OK
-                Svc2-->>Lis: 완료 (로그: 선착순 쿠폰 성공)
-            end
+  loop 메시지 소비
+    Kafka -->> Consumer: CouponIssueEvent 수신
+    Consumer ->> DB: 쿠폰 조회 및 기간 검증
+    alt 발급 가능 기간 아님
+      Consumer ->> Consumer: 비즈니스 예외 처리
+    else 기간 유효
+      Consumer ->> Redis: existsIssuedUser(couponId, userId)?
+      alt 이미 발급 사용자
+        Consumer ->> Consumer: 비즈니스 예외 처리
+      else 신규 사용자
+        Consumer ->> Redis: limit/count 조회 (getCouponLimitQuantity / countIssuedUser)
+        alt 수량 초과
+          Consumer ->> Consumer: 비즈니스 예외 처리
+        else 수량 여유 있음
+          %% Redis로 중복/경합 1차 차단 (원자 연산)
+          Consumer ->> Redis: saveIssuedUser(couponId, userId)
+          %% DB에서 수량 확정 (배타락으로 직렬화)
+          Consumer ->> DB: 쿠폰 수량 증가 (Pessimistic Lock)
+          Consumer ->> DB: UserCoupon 저장 (발급 확정)
         end
-    and API 응답
-        Ctrl-->>C: 200 OK (CouponIssueResponse)
+      end
     end
+  end
 
 ```
 

@@ -173,36 +173,31 @@ public class OutboxEvent {
 ```mermaid
 sequenceDiagram
     autonumber
-    participant C as Client
-    participant F as OrderFacade (App)
-    participant DB as RDBMS
-    participant OB as Outbox 테이블
-    participant SCH as OutboxScheduler
-    participant P as Kafka Producer
-    participant K as Kafka(Broker, Topic: order.created)
-    participant L as Kafka Consumer (ProductSalesRanking)
+    participant order as 주문(Facade/App)
+    participant db as Database(RDBMS)
+    participant outbox as Outbox 테이블
+    participant sch as OutboxScheduler
+    participant producer as Kafka Producer
+    participant kafka as Kafka (topic: order.created)
+    participant consumer as ProductSalesRanking(Consumer)
 
-    C->>F: 주문 생성 요청(place)
-    activate F
-    F->>DB: 주문/결제/포인트/쿠폰 처리 (트랜잭션)
-    F->>OB: Outbox INSERT(status=INIT, topic=order.created, payload=JSON)
-    DB-->>F: 커밋 성공
-    deactivate F
+    %% 주문 트랜잭션 내 기록
+    order ->> outbox: Outbox INSERT (status=INIT, topic=order.created, payload=JSON)
+    order ->> db: 트랜잭션 커밋
+    db -->> order: 커밋 성공 (주문 완료)
 
-    Note over F,OB: DB 커밋과 Outbox 기록이 같은 트랜잭션으로 보장
+    %% 비동기 이벤트 전파
+    sch -->> outbox: 주기적 폴링(STATUS=INIT)
+    sch ->> outbox: INIT 이벤트 배치 조회
+    sch ->> producer: publish OrderCreatedEvent (key=orderId)
+    producer ->> kafka: send(topic=order.created)
+    kafka -->> producer: ACK(acks=all)
+    sch ->> outbox: STATUS=PUBLISHED 업데이트
 
-    SCH-->>OB: 주기적 폴링(STATUS=INIT)
-    SCH->>OB: INIT 이벤트 배치 조회
-    SCH->>SCH: payload 역직렬화(OrderCreatedEvent)
-    SCH->>P: publish(event, key=aggregateId)
-    P->>K: send to topic=order.created
-    K-->>P: ACK (acks=all)
-
-    SCH->>OB: STATUS= PUBLISHED 로 업데이트
-
-    K-->>L: 메시지 전달 (파티션: key 기반)
-    L->>L: 멱등 처리/비즈니스 로직 수행
-    L-->>K: 오프셋 커밋(자동/수동)
+    %% 소비 및 후속 처리
+    kafka -->> consumer: OrderCreatedEvent 전달
+    consumer ->> consumer: 판매량 집계, 데이터 플랫폼 정보 전달
+    consumer -->> kafka: 오프셋 커밋(자동/수동)
 ```
 
 #### 1. 도메인 트랜잭션
