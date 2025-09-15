@@ -1,13 +1,9 @@
 ## 1. 포인트
-### 포인트 충전 시퀀스 다이어그램
+### 1-1. 포인트 충전
 ```mermaid
----
-config:
-  theme: redux
----
 sequenceDiagram
     autonumber
-    actor User as 사용자
+    actor User
     participant PointController as PointController(API)
     participant PointService as PointService
     participant UserPointRepository
@@ -20,21 +16,12 @@ sequenceDiagram
 
     %% 요청값 검증
     alt 최소 충전 금액 미만
-        PointController-->>User: 실패 - 최소 충전 금액 미만
-    else 충전 단위 불일치
-        PointController-->>User: 실패 - 1,000원 단위만 허용
+        PointController-->>User: 실패 - 최소 충전 금액 미만 (10,000원 이상)
     else 유효성 검증 통과
         PointController->>PointService: 잔액 충전 처리 요청(userId, amount)
     end
 
-    %% 하루 충전 한도 검증
-    PointService->>UserPointHistoryRepository: 오늘 누적 충전액 집계(userId)
-    UserPointHistoryRepository-->>PointService: 오늘 누적 충전액
-    alt 하루 한도 초과
-        PointService-->>PointController: 실패 - 하루 한도 초과
-        PointController-->>User: 실패 - 하루 한도 초과
-    else 하루 한도 이내
-        %% 현재 잔액 및 사용자 조회
+    %% 현재 잔액 및 사용자 조회
         PointService->>UserPointRepository: UserPoint 조회
         UserPointRepository-->>PointService: UserPoint 도메인
 
@@ -43,11 +30,11 @@ sequenceDiagram
         activate UserPoint 
         UserPoint ->> UserPoint : 보유 한도 초과 여부 검증
         deactivate UserPoint
-        alt 보유 한도 검증 통과
+        alt 보유 한도 검증 실패
             UserPoint-->>PointService: 실패 - 보유 한도 초과
             PointService-->>PointController: 실패 - 보유 한도 초과
             PointController-->>User: 실패 - 보유 한도 초과
-        else 검증 통과
+        else 보유 한도 검증 성공
             %% 잔액 증가 및 저장
             activate UserPoint
             UserPoint ->> UserPoint: 잔액증가(+amount)
@@ -66,17 +53,12 @@ sequenceDiagram
             PointService-->>PointController: 충전 성공
             PointController-->>User: 충전 성공
         end
-    end
 ```
-### 포인트 조회 시퀀스 다이어그램
+### 1-2. 포인트 조회
 ```mermaid
----
-config:
-  theme: redux
----
 sequenceDiagram
     autonumber
-    actor User 사용자
+    actor User
     participant UserPoint 
 
     User ->> UserPoint : 사용자의 잔액 정보 조회
@@ -84,15 +66,11 @@ sequenceDiagram
 ```
 
 ## 2. 쿠폰
-### 선착순 쿠폰 발급 시퀀스 다이어그램
+### 2-1-1. 선착순 발급 (초기 설계:동기 처리)
 ```mermaid
----
-config:
-  theme: redux
----
 sequenceDiagram
     autonumber
-    actor User as 사용자
+    actor User
     participant CouponController
     User ->> CouponController: 쿠폰 발급 요청(userId, couponId)
 
@@ -146,37 +124,90 @@ sequenceDiagram
     end
 ```
 
-### 보유 쿠폰 조회 시퀀스 다이어그램
+### 2-1-2 선착순 발급 (Redis 대기열)
 ```mermaid
----
-config:
-  theme: redux
----
+sequenceDiagram
+   autonumber
+   participant User as User
+   participant CouponService as CouponService
+   participant Redis as Redis (대기열)
+   participant Scheduler as Scheduler
+   participant DB as Database (SOT)
+
+   User ->> CouponService: 쿠폰 발급 요청
+   CouponService ->> CouponService: 만료/중복/수량 초과 검증
+   CouponService ->> Redis: 대기열 등록 (couponId, userId)
+   CouponService -->> User: 발급 요청 접수 완료 (비동기 응답)
+
+   loop 주기적 실행
+   Scheduler ->> Redis: 대기열에서 userId 목록 Pop
+   Scheduler ->> DB: 쿠폰 수량 증가 (Pessimistic Lock)
+   Scheduler ->> DB: UserCoupon 저장 (발급 확정)
+   end
+```
+
+### 2-1-3. 선착순 발급 (Redis + Kafka)
+```
+sequenceDiagram
+  autonumber
+  participant User as User
+  participant CouponService as CouponService
+  participant Kafka as Kafka Broker (topic: coupon.issue.requested)
+  participant Consumer as CouponIssueConsumer
+  participant Redis as Redis (발급 캐시)
+  participant DB as Database (SOT)
+
+  User ->> CouponService: 쿠폰 발급 요청
+  CouponService ->> Kafka: CouponIssueEvent(userId, couponId) 발행
+  CouponService -->> User: 발급 요청 접수 완료 (비동기 응답)
+
+  loop 메시지 소비
+    Kafka -->> Consumer: CouponIssueEvent 수신
+    Consumer ->> DB: 쿠폰 조회 및 기간 검증
+    alt 발급 가능 기간 아님
+      Consumer ->> Consumer: 비즈니스 예외 처리
+    else 기간 유효
+      Consumer ->> Redis: existsIssuedUser(couponId, userId)?
+      alt 이미 발급 사용자
+        Consumer ->> Consumer: 비즈니스 예외 처리
+      else 신규 사용자
+        Consumer ->> Redis: limit/count 조회 (getCouponLimitQuantity / countIssuedUser)
+        alt 수량 초과
+          Consumer ->> Consumer: 비즈니스 예외 처리
+        else 수량 여유 있음
+          %% Redis로 중복/경합 1차 차단 (원자 연산)
+          Consumer ->> Redis: saveIssuedUser(couponId, userId)
+          %% DB에서 수량 확정 (배타락으로 직렬화)
+          Consumer ->> DB: 쿠폰 수량 증가 (Pessimistic Lock)
+          Consumer ->> DB: UserCoupon 저장 (발급 확정)
+        end
+      end
+    end
+  end
+```
+
+### 2-2. 보유 쿠폰 목록 조회
+```mermaid
 sequenceDiagram
     autonumber
-    actor User as 사용자
+    actor User
     participant UserCoupon
     User ->> UserCoupon : 사용자의 쿠폰 정보 조회
     UserCoupon -->> User : 사용자의 쿠폰 정보 전달
 ```
 
 ## 3. 상품
-### 상품 조회 시퀀스 다이어그램
+### 3-1. 상품 조회
 ```mermaid
----
-config:
-  theme: redux
----
 sequenceDiagram
     autonumber
-    actor User as 사용자
+    actor User
     participant Product
     User ->> Product : 상품 정보 조회
     Product -->> User: 상품 정보 전달
 ```
 
-## 4. 주문/결제
-### 주문/결제 시퀀스 다이어그램
+### 3-2-1. 상위 상품 (초기 설계 : 스케줄러로 테이블 업데이트)
 ```mermaid
 ---
 config:
@@ -184,7 +215,79 @@ config:
 ---
 sequenceDiagram
     autonumber
-    actor user as 사용자
+    participant Scheduler as 스케줄러
+    participant OrderProduct as ORDER_PRODUCT 테이블
+    participant BestSeller as BEST_SELLER 테이블
+    
+    loop while(every 24hrs)
+
+	    Scheduler->>OrderProduct: 매일 24시 최근 3일 주문상품 판매량 집계 쿼리 실행
+	    OrderProduct-->>Scheduler: 집계 결과(상품ID, 판매수량)
+	    Scheduler->>BestSeller: BEST_SELLER 테이블 초기화
+	    BestSeller-->>Scheduler: 초기화 완료
+	    loop 상위 5개 상품
+	        Scheduler->>BestSeller: 상품ID, 이름, 단가, 판매수량 기록
+	        BestSeller-->>Scheduler: 기록 완료
+	    end
+	end
+```
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant BestProduct
+    User ->> BestProduct : 3일간 상위 상품 정보 조회
+    BestProduct -->> User: 3일간 상위 상품 정보 전달
+```
+
+### 3-2-2. 상위 상품(Redis 캐싱, Application Event)
+```mermaid
+sequenceDiagram
+       autonumber
+       participant OrderFacade as OrderFacade
+       participant OrderCreatedEventHandler as OrderCreatedEventHandler
+       participant ProductSalesRankingService as ProductSalesRankingService
+       participant Redis as Redis (Cache)
+       participant DB as Database (SOT)
+       participant BestProductAggregateScheduler as BestProductAggregateScheduler
+       participant ProductSalesHistoryScheduler as ProductSalesHistoryScheduler
+    
+       OrderFacade ->> OrderCreatedEventHandler: 주문 완료 이벤트 발행
+       OrderCreatedEventHandler ->> ProductSalesRankingService: (AFTER_COMMIT) 이벤트 전달
+       ProductSalesRankingService ->> Redis: 실시간 판매량 집계 업데이트
+    
+       loop 매 시간
+       BestProductAggregateScheduler ->> Redis: today, today-1, today-2 랭킹 캐싱 워밍
+       end
+    
+       loop 매일 00:10
+       ProductSalesHistoryScheduler ->> DB: 전날 판매량 집계 영속화
+       end
+```
+
+### 3-2-3. 상위 상품 조회 (Kafka 이벤트)
+```mermaid
+sequenceDiagram
+  autonumber
+  participant Order as OrderFacade
+  participant P as Kafka Producer
+  participant K as Kafka (topic: order.created)
+  participant Rank as ProductSalesRanking(Consumer)
+  participant Redis as Redis(Cache)
+
+  Order ->> P: publish OrderCreatedEvent(orderId, items)
+  P ->> K: send to order.created
+  K -->> Rank: consume OrderCreatedEvent
+  Rank ->> Redis: 실시간 집계 업데이트(상품별 INCR)
+```
+
+
+## 4. 주문/결제
+### 4-1. 주문/결제 (초기 설계)
+```mermaid
+sequenceDiagram
+    autonumber
+    actor user as User
     participant order as 주문
     participant stock as 재고
     participant coupon as 쿠폰
@@ -247,42 +350,33 @@ sequenceDiagram
 
 ```
 
-## 5. 상위 상품
-### 상위 상품 조회 시퀀스 다이어그램
+### 4-2. 주문 완료 이후 Outbox + Kafka
 ```mermaid
----
-config:
-  theme: redux
----
 sequenceDiagram
     autonumber
-    actor User as 사용자
-    participant BestProduct
-    User ->> BestProduct : 3일간 상위 상품 정보 조회
-    BestProduct -->> User: 3일간 상위 상품 정보 전달
-```
+    participant order as 주문(Facade/App)
+    participant db as Database(RDBMS)
+    participant outbox as Outbox 테이블
+    participant sch as OutboxScheduler
+    participant producer as Kafka Producer
+    participant kafka as Kafka (topic: order.created)
+    participant consumer as ProductSalesRanking(Consumer)
 
-### 상위 상품 스케줄러 시퀀스 다이어그램
-```mermaid
----
-config:
-  theme: redux
----
-sequenceDiagram
-    autonumber
-    participant Scheduler as 스케줄러
-    participant OrderProduct as ORDER_PRODUCT 테이블
-    participant BestSeller as BEST_SELLER 테이블
-    
-    loop while(every 24hrs)
+    %% 주문 트랜잭션 내 기록
+    order ->> outbox: Outbox INSERT (status=INIT, topic=order.created, payload=JSON)
+    order ->> db: 트랜잭션 커밋
+    db -->> order: 커밋 성공 (주문 완료)
 
-	    Scheduler->>OrderProduct: 매일 24시 최근 3일 주문상품 판매량 집계 쿼리 실행
-	    OrderProduct-->>Scheduler: 집계 결과(상품ID, 판매수량)
-	    Scheduler->>BestSeller: BEST_SELLER 테이블 초기화
-	    BestSeller-->>Scheduler: 초기화 완료
-	    loop 상위 5개 상품
-	        Scheduler->>BestSeller: 상품ID, 이름, 단가, 판매수량 기록
-	        BestSeller-->>Scheduler: 기록 완료
-	    end
-	end
+    %% 비동기 이벤트 전파
+    sch -->> outbox: 주기적 폴링(STATUS=INIT)
+    sch ->> outbox: INIT 이벤트 배치 조회
+    sch ->> producer: publish OrderCreatedEvent (key=orderId)
+    producer ->> kafka: send(topic=order.created)
+    kafka -->> producer: ACK(acks=all)
+    sch ->> outbox: STATUS=PUBLISHED 업데이트
+
+    %% 소비 및 후속 처리
+    kafka -->> consumer: OrderCreatedEvent 전달
+    consumer ->> consumer: 판매량 집계, 데이터 플랫폼 정보 전달
+    consumer -->> kafka: 오프셋 커밋(자동/수동)
 ```
