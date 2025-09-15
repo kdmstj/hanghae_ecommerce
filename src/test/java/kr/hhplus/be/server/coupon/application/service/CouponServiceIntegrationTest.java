@@ -25,6 +25,10 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -247,6 +251,44 @@ public class CouponServiceIntegrationTest {
                 assertThatThrownBy(() -> couponService.use(commands))
                         .isInstanceOf(BusinessException.class)
                         .hasMessageContaining(ErrorCode.USER_COUPON_NOT_FOUND.getMessage());
+            }
+
+            @Test
+            @DisplayName("실패 - 동시에 여러번 쿠폰 사용을 처리할 때")
+            void 쿠폰_사용_실패_동시_요청() throws InterruptedException {
+                //given
+                Coupon coupon = couponRepository.save(CouponFixture.validPeriod());
+                UserCoupon userCoupon = userCouponRepository.save(UserCouponFixture.withUserIdAndCouponId(1L, coupon.getId()));
+                userCouponStateRepository.save(UserCouponStateFixture.withUserCouponIdAndWithUserCouponStatus(userCoupon.getId(), UserCouponStatus.ISSUED));
+
+                //when
+                int threadCount = 10;
+                ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+                CountDownLatch latch = new CountDownLatch(threadCount);
+
+                List<CouponUseCommand> commands = List.of(new CouponUseCommand(userCoupon.getId(), 1000));
+
+                AtomicInteger successCount = new AtomicInteger();
+                AtomicInteger failCount = new AtomicInteger();
+                for (int i = 0; i < threadCount; i++) {
+
+                    executorService.submit(() -> {
+                        try {
+                            couponService.use(commands);
+                            successCount.incrementAndGet();
+                        } catch (Exception e) {
+                            failCount.incrementAndGet();
+                        } finally {
+                            latch.countDown();
+                        }
+                    });
+                }
+                latch.await();
+                executorService.shutdown();
+
+                //then
+                assertThat(successCount.get()).isEqualTo(1);
+                assertThat(failCount.get()).isEqualTo(threadCount - 1);
             }
 
             @Test
